@@ -17,6 +17,8 @@ USER 0
 WORKDIR /app
 
 COPY --from=builder /app/main /app/main
+COPY --from=builder /app/web /app/web
+COPY --from=builder /app/migrations /app/migrations
 
 RUN adduser -D -s /bin/sh appuser
 RUN chown -R appuser:appuser /app
