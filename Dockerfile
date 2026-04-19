@@ -3,14 +3,12 @@ FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
 RUN apk add --no-cache git
 
-# Download modules first (better layer caching)
+# Cache module downloads
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source and build
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/server ./cmd/server
 
@@ -21,14 +19,10 @@ RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
 
-# Copy binary
 COPY --from=builder /app/server .
-
-# Copy static assets and templates
 COPY web/ ./web/
 COPY migrations/ ./migrations/
 
-# Non-root user
 RUN addgroup -S aba && adduser -S aba -G aba
 USER aba
 
