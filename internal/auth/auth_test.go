@@ -75,6 +75,9 @@ func TestClearSessionCookie(t *testing.T) {
 	if c.MaxAge != -1 {
 		t.Errorf("MaxAge = %d, want -1", c.MaxAge)
 	}
+	if !c.Secure {
+		t.Error("clear cookie should be Secure")
+	}
 }
 
 func TestUserFromContext(t *testing.T) {
