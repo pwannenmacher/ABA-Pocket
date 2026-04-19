@@ -26,6 +26,8 @@ Webanwendung zur Erfassung und Generierung druckbarer **Notfallmedizin-Taschenka
 | Frontend   | `html/template`, HTMX 1.9, Vanilla CSS/JS |
 | Deployment | Docker + Docker Compose                   |
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=coverage)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) 
+
 ## Schnellstart (Docker)
 
 ```bash
