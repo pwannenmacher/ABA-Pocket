@@ -19,7 +19,6 @@ env:
 
 jobs:
   build-test-analyze:
-    name: Format
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
