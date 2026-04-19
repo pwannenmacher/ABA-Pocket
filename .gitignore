@@ -1,6 +1,6 @@
 # Binaries
 bin/
-server
+/server
 
 # Go build cache
 *.test
@@ -14,6 +14,9 @@ server
 .idea/
 .vscode/
 *.iml
+
+># Local-only config
+.claude/
 
 # OS
 .DS_Store
