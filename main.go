@@ -54,6 +54,8 @@ func main() {
 		}
 	}()
 
+	go cleanupSessions(repos)
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -90,4 +92,17 @@ func seedAdmin(cfg *config.Config, repos *repository.Repositories) {
 		return
 	}
 	log.Printf("Initial admin user '%s' created", cfg.AdminUsername)
+}
+
+func cleanupSessions(repos *repository.Repositories) {
+	ticker := time.NewTicker(1 * time.Hour)
+	defer ticker.Stop()
+	for range ticker.C {
+		n, err := repos.Users.DeleteExpiredSessions(context.Background())
+		if err != nil {
+			log.Printf("Session cleanup error: %v", err)
+		} else if n > 0 {
+			log.Printf("Session cleanup: %d expired sessions removed", n)
+		}
+	}
 }

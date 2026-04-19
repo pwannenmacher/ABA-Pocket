@@ -109,3 +109,11 @@ func (r *UserRepository) DeleteSession(ctx context.Context, sessionID string) er
 	_, err := r.pool.Exec(ctx, `DELETE FROM sessions WHERE id = $1`, sessionID)
 	return err
 }
+
+func (r *UserRepository) DeleteExpiredSessions(ctx context.Context) (int64, error) {
+	tag, err := r.pool.Exec(ctx, `DELETE FROM sessions WHERE expires_at < NOW()`)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}

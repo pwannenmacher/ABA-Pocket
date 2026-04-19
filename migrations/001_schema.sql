@@ -68,7 +68,4 @@ CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_symptom_tables_symptom ON symptom_tables(symptom_id);
 CREATE INDEX IF NOT EXISTS idx_symptom_table_rows_table ON symptom_table_rows(symptom_table_id);
 
-CREATE OR REPLACE FUNCTION cleanup_sessions() RETURNS void AS $$
-    DELETE FROM sessions WHERE expires_at < NOW();
-$$ LANGUAGE SQL;
 
