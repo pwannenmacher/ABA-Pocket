@@ -1,10 +1,10 @@
 .PHONY: run build test docker-up docker-down migrate
 
 run:
-	go run ./cmd/server
+	go run .
 
 build:
-	go build -o bin/server ./cmd/server
+	go build -o bin/server .
 
 test:
 	go test ./...

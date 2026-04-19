@@ -3,7 +3,16 @@ package config
 import (
 	"log"
 	"os"
+
+	"github.com/joho/godotenv"
 )
+
+// aus .env gelesene Werte (Fallback für nicht gesetzte Env-Variablen)
+var dotenv map[string]string
+
+func init() {
+	dotenv, _ = godotenv.Read() // .env parsen, ohne os.Setenv aufzurufen
+}
 
 type Config struct {
 	ListenAddr    string
@@ -12,6 +21,13 @@ type Config struct {
 	AdminUsername string
 	AdminPassword string
 	DevMode       bool
+
+	// Impressum
+	ImprintName   string
+	ImprintStreet string
+	ImprintZip    string
+	ImprintCity   string
+	ImprintEmail  string
 }
 
 func Load() *Config {
@@ -22,6 +38,11 @@ func Load() *Config {
 		AdminUsername: getEnv("ADMIN_USERNAME", ""),
 		AdminPassword: getEnv("ADMIN_PASSWORD", ""),
 		DevMode:       getEnv("DEV_MODE", "false") == "true",
+		ImprintName:   getEnv("IMPRINT_NAME", ""),
+		ImprintStreet: getEnv("IMPRINT_STREET", ""),
+		ImprintZip:    getEnv("IMPRINT_ZIP", ""),
+		ImprintCity:   getEnv("IMPRINT_CITY", ""),
+		ImprintEmail:  getEnv("IMPRINT_EMAIL", ""),
 	}
 
 	if cfg.SessionSecret == "" {
@@ -34,8 +55,12 @@ func Load() *Config {
 	return cfg
 }
 
+// getEnv prüft zuerst echte Env-Variablen (Docker), dann .env-Datei, dann Fallback.
 func getEnv(key, fallback string) string {
 	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	if v, ok := dotenv[key]; ok && v != "" {
 		return v
 	}
 	return fallback

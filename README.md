@@ -56,14 +56,14 @@ Benutzer in der Datenbank existieren.
 # PostgreSQL starten (nur DB)
 docker compose up db -d
 
-# .env laden und Server starten
+# .env anlegen und anpassen
 cp .env.example .env
-# DATABASE_URL auf localhost anpassen
-export $(grep -v '^#' .env | xargs)
 
-go run ./cmd/server
+go run .
 # → http://localhost:8080
 ```
+
+Die `.env`-Datei wird automatisch geladen (via `godotenv`).
 
 Für schnelle Template-Änderungen ohne Neustart: `DEV_MODE=true` in `.env` setzen (deaktiviert Template-Cache).
 
@@ -77,19 +77,24 @@ Für schnelle Template-Änderungen ohne Neustart: `DEV_MODE=true` in `.env` setz
 | `ADMIN_USERNAME` |         | –                                                                       | Benutzername für den initialen Admin      |
 | `ADMIN_PASSWORD` |         | –                                                                       | Passwort für den initialen Admin          |
 | `DEV_MODE`       |         | `false`                                                                 | Template-Cache deaktivieren (Entwicklung) |
+| `IMPRINT_NAME`   |         | –                                                                       | Name für Impressum (§ 5 DDG)              |
+| `IMPRINT_STREET` |         | –                                                                       | Straße und Hausnummer (ggf. c/o)          |
+| `IMPRINT_ZIP`    |         | –                                                                       | Postleitzahl                              |
+| `IMPRINT_CITY`   |         | –                                                                       | Ort                                       |
+| `IMPRINT_EMAIL`  |         | –                                                                       | Kontakt-E-Mail                            |
 
 ## Projektstruktur
 
 ```
 aba-pocket/
-├── cmd/server/main.go              # Einstiegspunkt
+├── main.go                         # Einstiegspunkt
 ├── internal/
 │   ├── auth/auth.go                # Session-Cookie-Auth & Middleware
-│   ├── config/config.go            # Konfiguration aus Env
+│   ├── config/config.go            # Konfiguration aus .env / Umgebungsvariablen
 │   ├── db/db.go                    # DB-Pool & Migration
 │   ├── handlers/
 │   │   ├── handlers.go             # Router, Template-Renderer, Flash-Messages
-│   │   ├── public.go               # Öffentliche Seiten (Index, Karten, Suche)
+│   │   ├── public.go               # Öffentliche Seiten (Index, Karten, Suche, Impressum)
 │   │   ├── admin.go                # Admin-CRUD + Auth-Handler
 │   │   └── pdf_handler.go          # PDF-Endpunkte
 │   ├── models/models.go            # Datenstrukturen
@@ -109,6 +114,8 @@ aba-pocket/
 │   │   ├── symptom(s).html
 │   │   ├── medication(s).html
 │   │   ├── search.html
+│   │   ├── disclaimer.html         # Haftungsausschluss
+│   │   ├── imprint.html            # Impressum & Datenschutz
 │   │   └── admin/
 │   │       ├── layout.html         # Basis-Layout (admin)
 │   │       ├── login.html

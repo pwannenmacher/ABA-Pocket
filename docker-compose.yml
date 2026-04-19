@@ -10,6 +10,11 @@ services:
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
       - DEV_MODE=${DEV_MODE:-false}
+      - IMPRINT_NAME=${IMPRINT_NAME:-}
+      - IMPRINT_STREET=${IMPRINT_STREET:-}
+      - IMPRINT_ZIP=${IMPRINT_ZIP:-}
+      - IMPRINT_CITY=${IMPRINT_CITY:-}
+      - IMPRINT_EMAIL=${IMPRINT_EMAIL:-}
     depends_on:
       db:
         condition: service_healthy
