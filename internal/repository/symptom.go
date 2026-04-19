@@ -48,7 +48,7 @@ func (r *SymptomRepository) GetByID(ctx context.Context, id int64) (*models.Symp
 		return nil, fmt.Errorf("get symptom: %w", err)
 	}
 
-	if err := r.loadEntries(ctx, s); err != nil {
+	if err := r.loadTables(ctx, s); err != nil {
 		return nil, err
 	}
 	if err := r.loadMedications(ctx, s); err != nil {
@@ -57,21 +57,53 @@ func (r *SymptomRepository) GetByID(ctx context.Context, id int64) (*models.Symp
 	return s, nil
 }
 
-func (r *SymptomRepository) loadEntries(ctx context.Context, s *models.Symptom) error {
+func (r *SymptomRepository) loadTables(ctx context.Context, s *models.Symptom) error {
 	rows, err := r.pool.Query(ctx, `
-		SELECT id, left_col, right_col, sort_order
-		FROM symptom_entries WHERE symptom_id = $1 ORDER BY sort_order`, s.ID)
+		SELECT id, title, sort_order
+		FROM symptom_tables
+		WHERE symptom_id = $1
+		ORDER BY sort_order`, s.ID)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		e := models.CardEntry{}
-		if err := rows.Scan(&e.ID, &e.LeftCol, &e.RightCol, &e.SortOrder); err != nil {
+		t := models.SymptomTable{SymptomID: s.ID}
+		if err := rows.Scan(&t.ID, &t.Title, &t.SortOrder); err != nil {
 			return err
 		}
-		s.Entries = append(s.Entries, e)
+		s.Tables = append(s.Tables, t)
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	for i := range s.Tables {
+		if err := r.loadTableRows(ctx, &s.Tables[i]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *SymptomRepository) loadTableRows(ctx context.Context, t *models.SymptomTable) error {
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, medication, right_col, sort_order
+		FROM symptom_table_rows
+		WHERE symptom_table_id = $1
+		ORDER BY sort_order`, t.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		row := models.SymptomTableRow{SymptomTableID: t.ID}
+		if err := rows.Scan(&row.ID, &row.Medication, &row.RightCol, &row.SortOrder); err != nil {
+			return err
+		}
+		t.Rows = append(t.Rows, row)
 	}
 	return rows.Err()
 }
@@ -126,28 +158,42 @@ func (r *SymptomRepository) Delete(ctx context.Context, id int64) error {
 	return err
 }
 
-func (r *SymptomRepository) ReplaceEntries(ctx context.Context, symptomID int64, entries []models.CardEntry) error {
+// ReplaceTablesAndRows ersetzt alle Tabellen und Zeilen eines Leitsymptoms.
+func (r *SymptomRepository) ReplaceTablesAndRows(ctx context.Context, symptomID int64, tables []models.SymptomTable) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
 
-	_, err = tx.Exec(ctx, `DELETE FROM symptom_entries WHERE symptom_id = $1`, symptomID)
-	if err != nil {
+	// Alle bestehenden Tabellen löschen (CASCADE löscht auch Zeilen)
+	if _, err := tx.Exec(ctx, `DELETE FROM symptom_tables WHERE symptom_id = $1`, symptomID); err != nil {
 		return err
 	}
 
-	for i, e := range entries {
-		_, err = tx.Exec(ctx, `
-			INSERT INTO symptom_entries (symptom_id, left_col, right_col, sort_order)
-			VALUES ($1, $2, $3, $4)`,
-			symptomID, e.LeftCol, e.RightCol, i,
-		)
+	for i, table := range tables {
+		var tableID int64
+		err := tx.QueryRow(ctx, `
+			INSERT INTO symptom_tables (symptom_id, title, sort_order)
+			VALUES ($1, $2, $3)
+			RETURNING id`,
+			symptomID, table.Title, i,
+		).Scan(&tableID)
 		if err != nil {
 			return err
 		}
+
+		for j, row := range table.Rows {
+			if _, err := tx.Exec(ctx, `
+				INSERT INTO symptom_table_rows (symptom_table_id, medication, right_col, sort_order)
+				VALUES ($1, $2, $3, $4)`,
+				tableID, row.Medication, row.RightCol, j,
+			); err != nil {
+				return err
+			}
+		}
 	}
+
 	return tx.Commit(ctx)
 }
 
@@ -158,18 +204,16 @@ func (r *SymptomRepository) SetMedications(ctx context.Context, symptomID int64,
 	}
 	defer tx.Rollback(ctx)
 
-	_, err = tx.Exec(ctx, `DELETE FROM symptom_medications WHERE symptom_id = $1`, symptomID)
-	if err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM symptom_medications WHERE symptom_id = $1`, symptomID); err != nil {
 		return err
 	}
 
 	for _, medID := range medicationIDs {
-		_, err = tx.Exec(ctx, `
+		if _, err := tx.Exec(ctx, `
 			INSERT INTO symptom_medications (symptom_id, medication_id) VALUES ($1, $2)
 			ON CONFLICT DO NOTHING`,
 			symptomID, medID,
-		)
-		if err != nil {
+		); err != nil {
 			return err
 		}
 	}
@@ -206,7 +250,6 @@ func (r *SymptomRepository) Count(ctx context.Context) (int, error) {
 	return count, err
 }
 
-// GetLinkedMedicationIDs returns the IDs of medications linked to a symptom
 func (r *SymptomRepository) GetLinkedMedicationIDs(ctx context.Context, symptomID int64) (map[int64]bool, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT medication_id FROM symptom_medications WHERE symptom_id = $1`, symptomID)

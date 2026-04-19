@@ -15,21 +15,31 @@
     {{end}}
   </div>
 
-  {{if $s.Entries}}
-  <div class="card-table-wrapper">
-    <table class="card-table">
-      <tbody>
-        {{range $s.Entries}}
-        <tr>
-          <td class="cell-key">{{markdown .LeftCol}}</td>
-          <td class="cell-value">{{markdown .RightCol}}</td>
-        </tr>
-        {{end}}
-      </tbody>
-    </table>
+  {{if $s.Tables}}
+  <div class="card-tables-wrapper">
+    {{range $s.Tables}}
+    <div class="symptom-table-block">
+      {{if .Title}}
+      <div class="symptom-table-heading">{{.Title}}</div>
+      {{end}}
+      <div class="card-table-wrapper">
+        <table class="card-table">
+          <colgroup><col style="width:38%"><col></colgroup>
+          <tbody>
+            {{range .Rows}}
+            <tr>
+              <td class="cell-key">{{markdown .Medication}}</td>
+              <td class="cell-value">{{markdown .RightCol}}</td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {{end}}
   </div>
   {{else}}
-  <p class="empty-state">Keine Einträge vorhanden.</p>
+  <p class="empty-state" style="padding:16px">Noch keine Einträge vorhanden.</p>
   {{end}}
 
   <div class="card-footer-info">

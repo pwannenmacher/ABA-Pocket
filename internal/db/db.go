@@ -3,7 +3,10 @@ package db
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
+	"sort"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -35,17 +38,24 @@ func Connect(databaseURL string) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
+// Migrate führt alle SQL-Dateien in migrations/ in alphabetischer Reihenfolge aus.
 func Migrate(pool *pgxpool.Pool) error {
-	data, err := os.ReadFile("migrations/001_initial.sql")
+	files, err := filepath.Glob("migrations/*.sql")
 	if err != nil {
-		return fmt.Errorf("read migration: %w", err)
+		return fmt.Errorf("glob migrations: %w", err)
 	}
+	sort.Strings(files)
 
 	ctx := context.Background()
-	_, err = pool.Exec(ctx, string(data))
-	if err != nil {
-		return fmt.Errorf("run migration: %w", err)
+	for _, f := range files {
+		data, err := os.ReadFile(f)
+		if err != nil {
+			return fmt.Errorf("read %s: %w", f, err)
+		}
+		if _, err := pool.Exec(ctx, string(data)); err != nil {
+			return fmt.Errorf("run %s: %w", f, err)
+		}
+		log.Printf("Migration angewendet: %s", f)
 	}
-
 	return nil
 }

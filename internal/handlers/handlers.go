@@ -65,7 +65,8 @@ func New(cfg *config.Config, repos *repository.Repositories) *Handler {
 }
 
 func renderMarkdown(s string) template.HTML {
-	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
+	extensions := parser.CommonExtensions | parser.AutoHeadingIDs |
+		parser.NoEmptyLineBeforeBlock | parser.HardLineBreak
 	p := parser.NewWithExtensions(extensions)
 	doc := p.Parse([]byte(s))
 

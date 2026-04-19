@@ -156,8 +156,8 @@ func (h *Handler) AdminCreateSymptom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entries := parseEntries(r)
-	h.repos.Symptoms.ReplaceEntries(r.Context(), id, entries)
+	tables := parseSymptomTables(r)
+	h.repos.Symptoms.ReplaceTablesAndRows(r.Context(), id, tables)
 
 	medIDs := parseMedicationIDs(r)
 	h.repos.Symptoms.SetMedications(r.Context(), id, medIDs)
@@ -217,8 +217,8 @@ func (h *Handler) AdminUpdateSymptom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entries := parseEntries(r)
-	h.repos.Symptoms.ReplaceEntries(r.Context(), id, entries)
+	tables := parseSymptomTables(r)
+	h.repos.Symptoms.ReplaceTablesAndRows(r.Context(), id, tables)
 
 	medIDs := parseMedicationIDs(r)
 	h.repos.Symptoms.SetMedications(r.Context(), id, medIDs)
@@ -454,6 +454,43 @@ func (h *Handler) AdminEntryRow(w http.ResponseWriter, r *http.Request) {
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
+
+// parseSymptomTables liest die Tabellen-Struktur aus dem Formular.
+// Das JS renumberSymptomTables() benennt die Felder vor dem Submit um:
+//
+//	table_N_title, row_count_N, row_N_M_med, row_N_M_right
+func parseSymptomTables(r *http.Request) []models.SymptomTable {
+	tableCount, _ := strconv.Atoi(r.FormValue("table_count"))
+	var tables []models.SymptomTable
+
+	for t := 0; t < tableCount; t++ {
+		title := strings.TrimSpace(r.FormValue(fmt.Sprintf("table_%d_title", t)))
+		rowCount, _ := strconv.Atoi(r.FormValue(fmt.Sprintf("row_count_%d", t)))
+
+		var rows []models.SymptomTableRow
+		for m := 0; m < rowCount; m++ {
+			med := strings.TrimSpace(r.FormValue(fmt.Sprintf("row_%d_%d_med", t, m)))
+			right := strings.TrimSpace(r.FormValue(fmt.Sprintf("row_%d_%d_right", t, m)))
+			if med == "" && right == "" {
+				continue
+			}
+			rows = append(rows, models.SymptomTableRow{
+				Medication: med,
+				RightCol:   right,
+				SortOrder:  m,
+			})
+		}
+
+		if len(rows) > 0 || title != "" {
+			tables = append(tables, models.SymptomTable{
+				Title:     title,
+				Rows:      rows,
+				SortOrder: t,
+			})
+		}
+	}
+	return tables
+}
 
 func parseEntries(r *http.Request) []models.CardEntry {
 	leftCols := r.Form["entry_left[]"]

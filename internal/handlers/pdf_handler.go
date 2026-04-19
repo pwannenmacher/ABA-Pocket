@@ -101,10 +101,17 @@ func (h *Handler) PDFAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func symptomToCard(s *models.Symptom) pdf.CardData {
+	tables := make([]pdf.SymptomTableData, 0, len(s.Tables))
+	for _, t := range s.Tables {
+		tables = append(tables, pdf.SymptomTableData{
+			Title: t.Title,
+			Rows:  t.Rows,
+		})
+	}
 	return pdf.CardData{
 		Title:     s.Title,
 		CardType:  "symptom",
-		Entries:   s.Entries,
+		Tables:    tables,
 		Source:    s.Source,
 		UpdatedAt: s.UpdatedAt,
 	}

@@ -15,9 +15,12 @@
 <div class="alert alert-error">{{$error}}</div>
 {{end}}
 
-<form method="post"
+<form id="symptomForm" method="post"
   {{if $isEdit}}action="/admin/symptoms/{{$symptom.ID}}/edit"{{else}}action="/admin/symptoms/new"{{end}}
   class="admin-form">
+
+  {{/* Zähler für das JS-Renaming */}}
+  <input type="hidden" id="tableCount" name="table_count" value="{{len $symptom.Tables}}">
 
   <div class="form-section">
     <h2 class="form-section-title">Allgemein</h2>
@@ -29,7 +32,7 @@
     <div class="form-group">
       <label for="description">Kurzbeschreibung (Markdown)</label>
       <textarea id="description" name="description" class="form-textarea" rows="3"
-        placeholder="Optionaler einleitender Text (Markdown unterstützt)">{{$symptom.Description}}</textarea>
+        placeholder="Optionaler einleitender Text">{{$symptom.Description}}</textarea>
     </div>
     <div class="form-group">
       <label for="source">Quelle / Literaturangabe</label>
@@ -39,33 +42,60 @@
   </div>
 
   <div class="form-section">
-    <h2 class="form-section-title">Tabelleneinträge</h2>
-    <p class="form-hint">Beide Spalten unterstützen Markdown: <code>**fett**</code>, <code>- Liste</code>, Zeilenumbruch mit Leerzeile.</p>
-    <div class="entries-table-wrap">
-      <table class="entries-table" id="entriesTable">
-        <thead>
-          <tr>
-            <th style="width:38%">Schlüssel (linke Spalte)</th>
-            <th style="width:54%">Wert (rechte Spalte)</th>
-            <th style="width:8%"></th>
-          </tr>
-        </thead>
-        <tbody id="entriesBody">
-          {{range $symptom.Entries}}
-          <tr class="entry-row">
-            <td><textarea name="entry_left[]" class="entry-input" rows="2">{{.LeftCol}}</textarea></td>
-            <td><textarea name="entry_right[]" class="entry-input" rows="2">{{.RightCol}}</textarea></td>
-            <td class="entry-action"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button></td>
-          </tr>
-          {{end}}
-        </tbody>
-      </table>
+    <h2 class="form-section-title">Tabellen</h2>
+    <p class="form-hint">
+      Jede Tabelle kann eine optionale <strong>Überschrift</strong> haben (z.B. „Erstlinientherapie", „Bei Versagen").<br>
+      Beide Spalten unterstützen Markdown: <code>**fett**</code>, <code>- Liste</code>.
+    </p>
+
+    <div id="tablesContainer">
+      {{range $ti, $table := $symptom.Tables}}
+      <div class="symptom-table form-section-inner" data-table-idx="{{$ti}}">
+        <div class="table-header-bar">
+          <input type="text" class="table-title-input form-input"
+            name="table_{{$ti}}_title"
+            value="{{$table.Title}}"
+            placeholder="Überschrift dieser Tabelle (optional)">
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeTable(this)">Tabelle löschen</button>
+        </div>
+        <div class="entries-table-wrap">
+          <table class="entries-table">
+            <colgroup>
+              <col style="width:26px">
+              <col style="width:38%">
+              <col>
+              <col style="width:44px">
+            </colgroup>
+            <tbody class="rows-body">
+              {{range $ri, $row := $table.Rows}}
+              <tr class="table-row">
+                <td class="drag-handle" title="Zeile verschieben">⠿</td>
+                <td><textarea class="med-input entry-input"
+                  name="row_{{$ti}}_{{$ri}}_med"
+                  rows="2">{{$row.Medication}}</textarea></td>
+                <td><textarea class="right-input entry-input"
+                  name="row_{{$ti}}_{{$ri}}_right"
+                  rows="2">{{$row.RightCol}}</textarea></td>
+                <td class="entry-action">
+                  <button type="button" class="btn btn-danger btn-sm" onclick="removeTableRow(this)">✕</button>
+                </td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </div>
+        <input type="hidden" class="row-count-input" name="row_count_{{$ti}}" value="{{len $table.Rows}}">
+        <button type="button" class="btn btn-secondary btn-sm"
+          onclick="addTableRow(this.closest('.symptom-table'))">
+          + Zeile hinzufügen
+        </button>
+      </div>
+      {{end}}
     </div>
-    <button type="button" class="btn btn-secondary btn-sm"
-      hx-get="/admin/entries/row"
-      hx-target="#entriesBody"
-      hx-swap="beforeend">
-      + Zeile hinzufügen
+
+    <button type="button" class="btn btn-primary btn-sm" style="margin-top:12px"
+      onclick="addSymptomTable()">
+      + Tabelle hinzufügen
     </button>
   </div>
 

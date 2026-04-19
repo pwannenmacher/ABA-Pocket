@@ -288,6 +288,18 @@ code {
 .symptom-header    { background: var(--color-symptom); }
 .medication-header { background: var(--color-medication); }
 
+/* Buttons auf dunklem Karten-Header gut sichtbar machen */
+.card-header .btn {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+}
+.card-header .btn:hover {
+  background: rgba(255, 255, 255, 0.30);
+  border-color: #fff;
+}
+
 .card-header-top {
   display: flex;
   justify-content: space-between;
@@ -316,12 +328,15 @@ code {
   width: 100%;
   border-collapse: collapse;
   font-size: .9rem;
+  table-layout: fixed;        /* Firefox: erzwingt feste Spaltenbreiten */
 }
 
 .card-table td {
   padding: 9px 14px;
   border-bottom: 1px solid var(--color-border);
   vertical-align: top;
+  overflow-wrap: break-word;  /* Firefox: verhindert Überlauf */
+  word-break: break-word;
 }
 
 .card-table tr:last-child td { border-bottom: none; }
@@ -336,6 +351,12 @@ code {
 .cell-key p, .cell-value p { margin: 0 0 4px; }
 .cell-key p:last-child, .cell-value p:last-child { margin-bottom: 0; }
 .cell-key ul, .cell-value ul { margin: 0; padding-left: 16px; }
+/* Nummerierte Listen (z.B. "1. Gabe") innerhalb der Zelle halten */
+.cell-key ol, .cell-value ol {
+  margin: 0;
+  padding-left: 0;
+  list-style-position: inside;
+}
 
 .card-footer-info {
   display: flex;
@@ -347,6 +368,64 @@ code {
   color: var(--color-muted);
   border-top: 1px solid var(--color-border);
 }
+
+/* ── Symptom-Tabellen (öffentliche Ansicht) ─────────────────── */
+
+.card-tables-wrapper { }
+
+.symptom-table-block {
+  margin-top: 14px;
+  border-top: 2px solid var(--color-border);
+  padding-top: 2px;
+}
+.symptom-table-block:first-child { margin-top: 0; border-top: none; }
+
+/* Erste Zeile = Hauptmedikament → hervorheben */
+.symptom-table-block .card-table tbody tr:first-child td {
+  background: #e8f0fb;
+  font-weight: 700;
+  border-bottom: 2px solid #c5d5ee;
+}
+
+.symptom-table-heading {
+  padding: 6px 14px;
+  background: #eaf0fb;
+  color: var(--color-symptom);
+  font-size: .82rem;
+  font-weight: 700;
+  font-style: italic;
+  border-bottom: 1px solid #c8d8f0;
+}
+
+.th-med, .th-info {
+  padding: 5px 14px;
+  background: #f2f4f8;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ── Symptom-Tabellen (Admin-Formular) ──────────────────────── */
+
+.form-section-inner {
+  background: #f8f9fb;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.table-header-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.table-header-bar .form-input { flex: 1; }
 
 .related-section { padding: 14px 20px; border-top: 1px solid var(--color-border); }
 .related-title { font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--color-muted); margin-bottom: 8px; }
@@ -649,6 +728,25 @@ code {
 
 .entry-input:focus { outline: none; border-color: var(--color-primary); }
 .entry-action { width: 44px; text-align: center; vertical-align: middle; }
+
+/* Erste Zeile in Admin hervorheben */
+.entries-table .rows-body tr.table-row:first-child td { background: #f0f5ff; }
+
+/* Drag & Drop */
+.drag-handle {
+  width: 26px;
+  text-align: center;
+  cursor: grab;
+  color: #b5bec9;
+  user-select: none;
+  font-size: 15px;
+  vertical-align: middle;
+  padding: 0 4px !important;
+}
+.drag-handle:active { cursor: grabbing; }
+tr.table-row.dragging { opacity: 0.35; }
+tr.table-row.drag-over-top    td { border-top:    2px solid var(--color-primary) !important; }
+tr.table-row.drag-over-bottom td { border-bottom: 2px solid var(--color-primary) !important; }
 
 /* ── Checkbox grid ───────────────────────────────────────────── */
 
