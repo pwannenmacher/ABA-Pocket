@@ -1,0 +1,49 @@
+{{define "layout"}}<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{template "page_title" .}} – ABA Pocket</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="navbar container">
+      <a href="/" class="nav-brand">
+        <span class="brand-icon">💊</span>
+        <span class="brand-text">ABA Pocket</span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menü öffnen">☰</button>
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="/symptoms" class="nav-link">Leitsymptome</a></li>
+        <li><a href="/medications" class="nav-link">Medikamente</a></li>
+        <li><a href="/search" class="nav-link">🔍 Suche</a></li>
+        <li><a href="/pdf/all" class="nav-link nav-pdf" target="_blank">📄 PDF</a></li>
+        <li><a href="/admin" class="nav-link nav-admin">Admin</a></li>
+      </ul>
+    </nav>
+    <div class="search-bar-header container">
+      <input type="search" id="globalSearch" placeholder="Schnellsuche…"
+        hx-get="/search" hx-trigger="keyup changed delay:300ms" hx-target="#search-results-dropdown"
+        hx-include="[name='q']" name="q"
+        autocomplete="off" aria-label="Suche">
+      <div id="search-results-dropdown" class="search-dropdown"></div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      {{template "page_content" .}}
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>ABA Pocket – Notfallmedizin Taschenkarten</p>
+    </div>
+  </footer>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
+{{end}}

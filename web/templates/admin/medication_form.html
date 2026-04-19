@@ -1,0 +1,81 @@
+{{define "admin_title"}}{{if (index .Data "IsEdit")}}Medikament bearbeiten{{else}}Neues Medikament{{end}}{{end}}
+{{define "admin_content"}}
+{{$med := index .Data "Medication"}}
+{{$isEdit := index .Data "IsEdit"}}
+{{$error := index .Data "Error"}}
+
+<div class="page-header">
+  <h1>{{if $isEdit}}Medikament bearbeiten{{else}}Neues Medikament{{end}}</h1>
+  <a href="/admin/medications" class="btn btn-outline">← Zurück</a>
+</div>
+
+{{if $error}}
+<div class="alert alert-error">{{$error}}</div>
+{{end}}
+
+<form method="post"
+  {{if $isEdit}}action="/admin/medications/{{$med.ID}}/edit"{{else}}action="/admin/medications/new"{{end}}
+  class="admin-form">
+
+  <div class="form-section">
+    <h2 class="form-section-title">Allgemein</h2>
+    <div class="form-group">
+      <label for="name">Medikamentenname <span class="required">*</span></label>
+      <input type="text" id="name" name="name" class="form-input"
+        value="{{$med.Name}}" required placeholder="z.B. Adrenalin (Epinephrin)">
+    </div>
+    <div class="form-group">
+      <label for="description">Kurzbeschreibung (Markdown)</label>
+      <textarea id="description" name="description" class="form-textarea" rows="3"
+        placeholder="Optionaler einleitender Text (Markdown unterstützt)">{{$med.Description}}</textarea>
+    </div>
+    <div class="form-group">
+      <label for="source">Quelle / Literaturangabe</label>
+      <input type="text" id="source" name="source" class="form-input"
+        value="{{$med.Source}}" placeholder="z.B. Rote Liste 2024">
+    </div>
+  </div>
+
+  <div class="form-section">
+    <h2 class="form-section-title">Steckbrief-Einträge</h2>
+    <p class="form-hint">Typische Felder: Wirkstoff, Indikation, Dosierung, Kontraindikationen, Hinweise.<br>
+      Beide Spalten unterstützen Markdown: <code>**fett**</code>, <code>- Liste</code>.</p>
+    <div class="entries-table-wrap">
+      <table class="entries-table" id="entriesTable">
+        <thead>
+          <tr>
+            <th style="width:38%">Schlüssel (linke Spalte)</th>
+            <th style="width:54%">Wert (rechte Spalte)</th>
+            <th style="width:8%"></th>
+          </tr>
+        </thead>
+        <tbody id="entriesBody">
+          {{range $med.Entries}}
+          <tr class="entry-row">
+            <td><textarea name="entry_left[]" class="entry-input" rows="2">{{.LeftCol}}</textarea></td>
+            <td><textarea name="entry_right[]" class="entry-input" rows="2">{{.RightCol}}</textarea></td>
+            <td class="entry-action"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button></td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    <button type="button" class="btn btn-secondary btn-sm"
+      hx-get="/admin/entries/row"
+      hx-target="#entriesBody"
+      hx-swap="beforeend">
+      + Zeile hinzufügen
+    </button>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">
+      {{if $isEdit}}Änderungen speichern{{else}}Medikament erstellen{{end}}
+    </button>
+    <a href="/admin/medications" class="btn btn-outline">Abbrechen</a>
+    {{if $isEdit}}
+    <a href="/medications/{{$med.ID}}" class="btn btn-outline" target="_blank">Vorschau ↗</a>
+    {{end}}
+  </div>
+</form>
+{{end}}

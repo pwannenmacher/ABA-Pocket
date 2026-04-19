@@ -1,0 +1,43 @@
+{{define "admin_title"}}Medikamente{{end}}
+{{define "admin_content"}}
+<div class="page-header">
+  <h1>Medikamente</h1>
+  <a href="/admin/medications/new" class="btn btn-primary">+ Neues Medikament</a>
+</div>
+
+{{if .Data}}
+<div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Quelle</th>
+        <th>Zuletzt aktualisiert</th>
+        <th>Aktionen</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Data}}
+      <tr>
+        <td><a href="/medications/{{.ID}}" target="_blank" class="table-link">{{.Name}}</a></td>
+        <td class="text-muted">{{.Source}}</td>
+        <td class="text-muted">{{formatDate .UpdatedAt}}</td>
+        <td class="actions-cell">
+          <a href="/admin/medications/{{.ID}}/edit" class="btn btn-sm btn-secondary">Bearbeiten</a>
+          <form method="post" action="/admin/medications/{{.ID}}/delete" style="display:inline"
+                onsubmit="return confirm('Medikament wirklich löschen?')">
+            <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
+          </form>
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{else}}
+<div class="empty-state-box">
+  <p>Noch keine Medikamente vorhanden.</p>
+  <a href="/admin/medications/new" class="btn btn-primary">Erstes Medikament erstellen</a>
+</div>
+{{end}}
+{{end}}

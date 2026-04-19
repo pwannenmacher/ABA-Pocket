@@ -1,0 +1,46 @@
+{{define "admin_title"}}Dashboard{{end}}
+{{define "admin_content"}}
+<div class="page-header">
+  <h1>Dashboard</h1>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card symptom-stat">
+    <div class="stat-number">{{index .Data "SymptomCount"}}</div>
+    <div class="stat-label">Leitsymptome</div>
+    <a href="/admin/symptoms" class="stat-link">Verwalten →</a>
+  </div>
+  <div class="stat-card medication-stat">
+    <div class="stat-number">{{index .Data "MedicationCount"}}</div>
+    <div class="stat-label">Medikamente</div>
+    <a href="/admin/medications" class="stat-link">Verwalten →</a>
+  </div>
+  <div class="stat-card user-stat">
+    <div class="stat-number">{{index .Data "UserCount"}}</div>
+    <div class="stat-label">Administratoren</div>
+    <a href="/admin/users" class="stat-link">Verwalten →</a>
+  </div>
+</div>
+
+<div class="quick-actions">
+  <h2>Schnellaktionen</h2>
+  <div class="action-grid">
+    <a href="/admin/symptoms/new" class="action-card">
+      <span class="action-icon">➕</span>
+      <span>Neues Leitsymptom</span>
+    </a>
+    <a href="/admin/medications/new" class="action-card">
+      <span class="action-icon">➕</span>
+      <span>Neues Medikament</span>
+    </a>
+    <a href="/pdf/all" class="action-card" target="_blank">
+      <span class="action-icon">📄</span>
+      <span>Alle Karten als PDF</span>
+    </a>
+    <a href="/" class="action-card" target="_blank">
+      <span class="action-icon">↗</span>
+      <span>Website anzeigen</span>
+    </a>
+  </div>
+</div>
+{{end}}

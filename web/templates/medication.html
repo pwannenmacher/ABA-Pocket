@@ -1,0 +1,55 @@
+{{define "page_title"}}{{.Data.Name}}{{end}}
+{{define "page_content"}}
+{{$m := .Data}}
+<div class="pocket-card medication-card">
+  <div class="card-header medication-header">
+    <div class="card-header-top">
+      <span class="card-type-badge medication-badge">Medikament</span>
+      <div class="card-actions">
+        <a href="/pdf/medications/{{$m.ID}}" class="btn btn-sm btn-outline" target="_blank">📄 PDF</a>
+      </div>
+    </div>
+    <h1 class="card-title-large">{{$m.Name}}</h1>
+    {{if $m.Description}}
+    <div class="card-description">{{markdown $m.Description}}</div>
+    {{end}}
+  </div>
+
+  {{if $m.Entries}}
+  <div class="card-table-wrapper">
+    <table class="card-table">
+      <tbody>
+        {{range $m.Entries}}
+        <tr>
+          <td class="cell-key">{{markdown .LeftCol}}</td>
+          <td class="cell-value">{{markdown .RightCol}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <p class="empty-state">Keine Einträge vorhanden.</p>
+  {{end}}
+
+  <div class="card-footer-info">
+    {{if $m.Source}}<span class="info-item">📖 Quelle: {{$m.Source}}</span>{{end}}
+    <span class="info-item">🕐 Stand: {{formatDate $m.UpdatedAt}}</span>
+  </div>
+
+  {{if $m.Symptoms}}
+  <div class="related-section">
+    <h3 class="related-title">Verknüpfte Leitsymptome</h3>
+    <ul class="related-list">
+      {{range $m.Symptoms}}
+      <li><a href="/symptoms/{{.ID}}" class="related-link symptom-link">{{.Title}}</a></li>
+      {{end}}
+    </ul>
+  </div>
+  {{end}}
+</div>
+
+<div class="back-link-wrap">
+  <a href="/medications" class="back-link">← Alle Medikamente</a>
+</div>
+{{end}}

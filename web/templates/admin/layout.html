@@ -1,0 +1,48 @@
+{{define "admin_layout"}}<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{template "admin_title" .}} – ABA Pocket Admin</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <nav class="admin-nav container">
+      <a href="/admin" class="nav-brand">
+        <span class="brand-icon">💊</span>
+        <span class="brand-text">ABA Admin</span>
+      </a>
+      <ul class="admin-menu">
+        <li><a href="/admin/symptoms" class="admin-nav-link">Leitsymptome</a></li>
+        <li><a href="/admin/medications" class="admin-nav-link">Medikamente</a></li>
+        <li><a href="/admin/users" class="admin-nav-link">Benutzer</a></li>
+        <li><a href="/" class="admin-nav-link" target="_blank">↗ Website</a></li>
+        {{if .User}}
+        <li class="admin-user-info">{{.User.Username}}</li>
+        <li>
+          <form method="post" action="/admin/logout" style="display:inline">
+            <button type="submit" class="btn-logout">Abmelden</button>
+          </form>
+        </li>
+        {{end}}
+      </ul>
+    </nav>
+  </header>
+
+  <main class="admin-main container">
+    {{if .Flash}}
+    <div class="flash-message" id="flashMsg">
+      {{.Flash}}
+      <button type="button" onclick="this.parentElement.remove()" class="flash-close">✕</button>
+    </div>
+    {{end}}
+
+    {{template "admin_content" .}}
+  </main>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
+{{end}}

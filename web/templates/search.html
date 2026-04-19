@@ -1,0 +1,65 @@
+{{define "page_title"}}Suche{{end}}
+{{define "page_content"}}
+<h1>Suche</h1>
+
+<form class="search-form" action="/search" method="get"
+      hx-get="/search" hx-target="#search-results" hx-trigger="input delay:300ms from:#search-input">
+  <div class="search-input-wrap">
+    <input type="search" id="search-input" name="q" class="search-input-large"
+      value="{{index .Data "Query"}}"
+      placeholder="Leitsymptom oder Medikament suchen…"
+      autofocus autocomplete="off">
+    <button type="submit" class="btn btn-primary">Suchen</button>
+  </div>
+</form>
+
+<div id="search-results">
+  {{template "search_results" .Data}}
+</div>
+{{end}}
+
+{{define "search_results"}}
+{{$q := index . "Query"}}
+{{$symptoms := index . "Symptoms"}}
+{{$medications := index . "Medications"}}
+
+{{if $q}}
+<div class="search-results-container">
+  {{if $symptoms}}
+  <section class="results-section">
+    <h2 class="symptom-title">Leitsymptome</h2>
+    <ul class="card-list">
+      {{range $symptoms}}
+      <li>
+        <a href="/symptoms/{{.ID}}" class="card-list-item symptom-item">
+          <span class="card-title">{{.Title}}</span>
+          <span class="card-updated">{{formatDate .UpdatedAt}}</span>
+        </a>
+      </li>
+      {{end}}
+    </ul>
+  </section>
+  {{end}}
+
+  {{if $medications}}
+  <section class="results-section">
+    <h2 class="medication-title">Medikamente</h2>
+    <ul class="card-list">
+      {{range $medications}}
+      <li>
+        <a href="/medications/{{.ID}}" class="card-list-item medication-item">
+          <span class="card-title">{{.Name}}</span>
+          <span class="card-updated">{{formatDate .UpdatedAt}}</span>
+        </a>
+      </li>
+      {{end}}
+    </ul>
+  </section>
+  {{end}}
+
+  {{if and (eq (len $symptoms) 0) (eq (len $medications) 0)}}
+  <p class="empty-state">Keine Ergebnisse für „{{$q}}".</p>
+  {{end}}
+</div>
+{{end}}
+{{end}}
