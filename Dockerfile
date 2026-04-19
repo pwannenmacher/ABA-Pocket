@@ -1,34 +1,30 @@
-# ── Build stage ────────────────────────────────────────────────
-FROM golang:1.26-alpine AS builder
+
+FROM dhi.io/golang:1 AS builder
 
 WORKDIR /app
 
-RUN apk add --no-cache git
-
-# Cache module downloads
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/server .
 
-# ── Runtime stage ───────────────────────────────────────────────
-FROM alpine:3.23
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
-RUN apk add --no-cache ca-certificates tzdata
+FROM dhi.io/alpine-base:3.23
+
+USER 0
 
 WORKDIR /app
 
-COPY --from=builder /app/server .
-COPY web/ ./web/
-COPY migrations/ ./migrations/
+COPY --from=builder /app/main /app/main
 
-RUN addgroup -S aba && adduser -S aba -G aba
-USER aba
+RUN adduser -D -s /bin/sh appuser
+RUN chown -R appuser:appuser /app
+USER appuser
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
-  CMD wget -qO- http://localhost:8080/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
-CMD ["./server"]
+CMD ["./main"]
