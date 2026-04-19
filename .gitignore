@@ -1,6 +1,7 @@
 # Binaries
 bin/
 /server
+/aba-pocket
 
 # Go build cache
 *.test
@@ -15,8 +16,13 @@ bin/
 .vscode/
 *.iml
 
-># Local-only config
+# Local-only config
 .claude/
+
+# Project notes (not part of the application)
+
+CLAUDE.md
+dump.sql
 
 # OS
 .DS_Store
@@ -30,4 +36,3 @@ postgres_data/
 
 # Go module cache (not needed in repo)
 vendor/
-/aba-pocket
