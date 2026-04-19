@@ -131,8 +131,6 @@ func (h *Handler) Router() http.Handler {
 	return r
 }
 
-// ─── Template helpers ──────────────────────────────────────────────────────
-
 func (h *Handler) loadTemplate(cacheKey string, files []string) (*template.Template, error) {
 	if !h.cfg.DevMode {
 		h.tmplMu.RLock()
@@ -203,8 +201,6 @@ func (h *Handler) renderAdmin(w http.ResponseWriter, r *http.Request, status int
 	}
 }
 
-// ─── Flash messages ────────────────────────────────────────────────────────
-
 func setFlash(w http.ResponseWriter, msg string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "flash",
@@ -212,6 +208,7 @@ func setFlash(w http.ResponseWriter, msg string) {
 		Path:     "/admin",
 		MaxAge:   60,
 		HttpOnly: true,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 }
@@ -222,16 +219,16 @@ func getFlash(w http.ResponseWriter, r *http.Request) string {
 		return ""
 	}
 	http.SetCookie(w, &http.Cookie{
-		Name:   "flash",
-		Value:  "",
-		Path:   "/admin",
-		MaxAge: -1,
+		Name:     "flash",
+		Value:    "",
+		Path:     "/admin",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
 	})
 	msg, _ := url.QueryUnescape(cookie.Value)
 	return msg
 }
-
-// ─── Shared page data ──────────────────────────────────────────────────────
 
 type PageData struct {
 	Title     string
