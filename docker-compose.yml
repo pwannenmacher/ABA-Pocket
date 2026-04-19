@@ -14,8 +14,6 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
-    links:
-      - db
 
   db:
     image: postgres:18-alpine
@@ -26,7 +24,7 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U aba -d aba_pocket" ]
       interval: 5s
