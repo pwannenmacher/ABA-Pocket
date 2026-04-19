@@ -40,6 +40,15 @@ func (h *Handler) AdminLoginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ip := r.RemoteAddr
+	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+		ip = strings.Split(fwd, ",")[0]
+	}
+	if !h.loginLimiter.Allow(ip) {
+		http.Redirect(w, r, "/admin/login?error=rate", http.StatusSeeOther)
+		return
+	}
+
 	username := strings.TrimSpace(r.FormValue("username"))
 	password := r.FormValue("password")
 
@@ -52,6 +61,8 @@ func (h *Handler) AdminLoginPost(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/login?error=1", http.StatusSeeOther)
 		return
 	}
+
+	h.loginLimiter.Reset(ip)
 
 	sessionID, err := auth.GenerateSessionID()
 	if err != nil {
@@ -93,7 +104,7 @@ func (h *Handler) AdminDashboard(w http.ResponseWriter, r *http.Request) {
 		log.Printf("dashboard user count: %v", err)
 	}
 
-	h.renderAdmin(w, http.StatusOK, "dashboard", PageData{
+	h.renderAdmin(w, r, http.StatusOK, "dashboard", PageData{
 		Title: "Dashboard",
 		User:  auth.UserFromContext(r.Context()),
 		Flash: getFlash(w, r),
@@ -113,7 +124,7 @@ func (h *Handler) AdminListSymptoms(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Fehler", http.StatusInternalServerError)
 		return
 	}
-	h.renderAdmin(w, http.StatusOK, "symptoms", PageData{
+	h.renderAdmin(w, r, http.StatusOK, "symptoms", PageData{
 		Title: "Leitsymptome verwalten",
 		User:  auth.UserFromContext(r.Context()),
 		Flash: getFlash(w, r),
@@ -126,7 +137,7 @@ func (h *Handler) AdminNewSymptom(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("load medications for symptom form: %v", err)
 	}
-	h.renderAdmin(w, http.StatusOK, "symptom_form", PageData{
+	h.renderAdmin(w, r, http.StatusOK, "symptom_form", PageData{
 		Title: "Neues Leitsymptom",
 		User:  auth.UserFromContext(r.Context()),
 		Data: map[string]interface{}{
@@ -155,7 +166,7 @@ func (h *Handler) AdminCreateSymptom(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("load medications for symptom form: %v", err)
 		}
-		h.renderAdmin(w, http.StatusUnprocessableEntity, "symptom_form", PageData{
+		h.renderAdmin(w, r, http.StatusUnprocessableEntity, "symptom_form", PageData{
 			Title: "Neues Leitsymptom",
 			User:  auth.UserFromContext(r.Context()),
 			Data: map[string]interface{}{
@@ -206,7 +217,7 @@ func (h *Handler) AdminEditSymptom(w http.ResponseWriter, r *http.Request) {
 		linkedIDs = map[int64]bool{}
 	}
 
-	h.renderAdmin(w, http.StatusOK, "symptom_form", PageData{
+	h.renderAdmin(w, r, http.StatusOK, "symptom_form", PageData{
 		Title: "Leitsymptom bearbeiten",
 		User:  auth.UserFromContext(r.Context()),
 		Data: map[string]interface{}{
@@ -271,7 +282,7 @@ func (h *Handler) AdminListMedications(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Fehler", http.StatusInternalServerError)
 		return
 	}
-	h.renderAdmin(w, http.StatusOK, "medications", PageData{
+	h.renderAdmin(w, r, http.StatusOK, "medications", PageData{
 		Title: "Medikamente verwalten",
 		User:  auth.UserFromContext(r.Context()),
 		Flash: getFlash(w, r),
@@ -280,7 +291,7 @@ func (h *Handler) AdminListMedications(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) AdminNewMedication(w http.ResponseWriter, r *http.Request) {
-	h.renderAdmin(w, http.StatusOK, "medication_form", PageData{
+	h.renderAdmin(w, r, http.StatusOK, "medication_form", PageData{
 		Title: "Neues Medikament",
 		User:  auth.UserFromContext(r.Context()),
 		Data: map[string]interface{}{
@@ -303,7 +314,7 @@ func (h *Handler) AdminCreateMedication(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if m.Name == "" {
-		h.renderAdmin(w, http.StatusUnprocessableEntity, "medication_form", PageData{
+		h.renderAdmin(w, r, http.StatusUnprocessableEntity, "medication_form", PageData{
 			Title: "Neues Medikament",
 			User:  auth.UserFromContext(r.Context()),
 			Data: map[string]interface{}{
@@ -344,7 +355,7 @@ func (h *Handler) AdminEditMedication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.renderAdmin(w, http.StatusOK, "medication_form", PageData{
+	h.renderAdmin(w, r, http.StatusOK, "medication_form", PageData{
 		Title: "Medikament bearbeiten",
 		User:  auth.UserFromContext(r.Context()),
 		Data: map[string]interface{}{
@@ -409,7 +420,7 @@ func (h *Handler) AdminListUsers(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Fehler", http.StatusInternalServerError)
 		return
 	}
-	h.renderAdmin(w, http.StatusOK, "users", PageData{
+	h.renderAdmin(w, r, http.StatusOK, "users", PageData{
 		Title: "Benutzerverwaltung",
 		User:  auth.UserFromContext(r.Context()),
 		Flash: getFlash(w, r),
@@ -482,7 +493,8 @@ func (h *Handler) AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) AdminEntryRow(w http.ResponseWriter, _ *http.Request) {
 	const html = `
-<tr class="entry-row">
+<tr class="entry-row table-row">
+  <td class="drag-handle" title="Zeile verschieben">⠿</td>
   <td><textarea name="entry_left[]" class="entry-input" placeholder="Schlüssel (Markdown möglich)" rows="2"></textarea></td>
   <td><textarea name="entry_right[]" class="entry-input" placeholder="Wert (Markdown möglich)" rows="2"></textarea></td>
   <td class="entry-action"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button></td>

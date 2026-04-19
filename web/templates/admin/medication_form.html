@@ -16,6 +16,7 @@
 <form method="post"
   {{if $isEdit}}action="/admin/medications/{{$med.ID}}/edit"{{else}}action="/admin/medications/new"{{end}}
   class="admin-form">
+  <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
 
   <div class="form-section">
     <h2 class="form-section-title">Allgemein</h2>
@@ -42,16 +43,24 @@
       Beide Spalten unterstützen Markdown: <code>**fett**</code>, <code>- Liste</code>.</p>
     <div class="entries-table-wrap">
       <table class="entries-table" id="entriesTable">
+         <colgroup>
+            <col style="width:26px">
+            <col style="width:38%">
+            <col>
+            <col style="width:44px">
+          </colgroup>
         <thead>
           <tr>
-            <th style="width:38%">Schlüssel (linke Spalte)</th>
-            <th style="width:54%">Wert (rechte Spalte)</th>
-            <th style="width:8%"></th>
+            <th></th>
+            <th>Schlüssel (linke Spalte)</th>
+            <th>Wert (rechte Spalte)</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="entriesBody">
           {{range $med.Entries}}
-          <tr class="entry-row">
+          <tr class="entry-row table-row">
+            <td class="drag-handle" title="Zeile verschieben">⠿</td>
             <td><textarea name="entry_left[]" class="entry-input" rows="2">{{.LeftCol}}</textarea></td>
             <td><textarea name="entry_right[]" class="entry-input" rows="2">{{.RightCol}}</textarea></td>
             <td class="entry-action"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button></td>

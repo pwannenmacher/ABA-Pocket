@@ -22,8 +22,9 @@ import (
 )
 
 type Handler struct {
-	cfg   *config.Config
-	repos *repository.Repositories
+	cfg          *config.Config
+	repos        *repository.Repositories
+	loginLimiter *auth.LoginLimiter
 
 	tmplMu    sync.RWMutex
 	tmplCache map[string]*template.Template
@@ -32,9 +33,10 @@ type Handler struct {
 
 func New(cfg *config.Config, repos *repository.Repositories) *Handler {
 	h := &Handler{
-		cfg:       cfg,
-		repos:     repos,
-		tmplCache: make(map[string]*template.Template),
+		cfg:          cfg,
+		repos:        repos,
+		loginLimiter: auth.NewLoginLimiter(5, 15*time.Minute),
+		tmplCache:    make(map[string]*template.Template),
 	}
 	h.funcMap = template.FuncMap{
 		"markdown":    renderMarkdown,
@@ -97,6 +99,7 @@ func (h *Handler) Router() http.Handler {
 
 	r.Route("/admin", func(r chi.Router) {
 		r.Use(auth.Middleware(h.repos))
+		r.Use(h.csrfProtect)
 
 		r.Get("/", h.AdminDashboard)
 
@@ -181,7 +184,12 @@ func (h *Handler) render(w http.ResponseWriter, status int, page string, data in
 	}
 }
 
-func (h *Handler) renderAdmin(w http.ResponseWriter, status int, page string, data interface{}) {
+func (h *Handler) renderAdmin(w http.ResponseWriter, r *http.Request, status int, page string, data interface{}) {
+	// CSRF-Token automatisch in PageData einfügen
+	if pd, ok := data.(PageData); ok && pd.CSRFToken == "" {
+		pd.CSRFToken = auth.CSRFTokenFromRequest(r, h.cfg.SessionSecret)
+		data = pd
+	}
 	t, err := h.getAdminTemplate(page)
 	if err != nil {
 		log.Printf("admin template parse error (%s): %v", page, err)
@@ -226,8 +234,28 @@ func getFlash(w http.ResponseWriter, r *http.Request) string {
 // ─── Shared page data ──────────────────────────────────────────────────────
 
 type PageData struct {
-	Title string
-	User  *models.User
-	Flash string
-	Data  interface{}
+	Title     string
+	User      *models.User
+	Flash     string
+	CSRFToken string
+	Data      interface{}
+}
+
+// csrfProtect validiert CSRF-Tokens bei POST-Requests.
+func (h *Handler) csrfProtect(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			cookie, err := r.Cookie(auth.SessionCookieName)
+			if err != nil {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return
+			}
+			token := r.FormValue("csrf_token")
+			if !auth.ValidateCSRFToken(h.cfg.SessionSecret, cookie.Value, token) {
+				http.Error(w, "Forbidden – ungültiges CSRF-Token", http.StatusForbidden)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }

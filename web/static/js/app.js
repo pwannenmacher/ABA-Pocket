@@ -1,5 +1,15 @@
 /* ABA Pocket – Frontend JavaScript */
 
+// ── HTMX CSRF-Token für state-changing Requests ────────────────
+document.addEventListener('htmx:configRequest', function(evt) {
+  if (['post','put','delete','patch'].includes(evt.detail.verb)) {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta) {
+      evt.detail.parameters['csrf_token'] = meta.content;
+    }
+  }
+});
+
 // ── Mobile nav toggle ──────────────────────────────────────────
 const navToggle = document.getElementById('navToggle');
 const navMenu   = document.getElementById('navMenu');
@@ -189,6 +199,9 @@ function initRowDragDrop(tbody) {
 
 // Drag & Drop für alle beim Laden vorhandenen Tabellen initialisieren
 document.querySelectorAll('#tablesContainer .rows-body').forEach(initRowDragDrop);
+
+// Drag & Drop für Medikamenten-Einträge
+initRowDragDrop(document.getElementById('entriesBody'));
 
 // ── Renaming vor dem Submit ────────────────────────────────────
 // Benennt alle Felder des Symptom-Formulars sequenziell um, damit

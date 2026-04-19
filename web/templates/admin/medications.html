@@ -26,6 +26,7 @@
           <a href="/admin/medications/{{.ID}}/edit" class="btn btn-sm btn-secondary">Bearbeiten</a>
           <form method="post" action="/admin/medications/{{.ID}}/delete" style="display:inline"
                 onsubmit="return confirm('Medikament wirklich löschen?')">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
             <button type="submit" class="btn btn-sm btn-danger">Löschen</button>
           </form>
         </td>

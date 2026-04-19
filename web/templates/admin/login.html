@@ -16,7 +16,11 @@
         <p>Administrationsbereich</p>
       </div>
 
-      {{if .Error}}
+      {{if eq .Error "rate"}}
+      <div class="alert alert-error">
+        Zu viele Anmeldeversuche. Bitte warten Sie einige Minuten.
+      </div>
+      {{else if .Error}}
       <div class="alert alert-error">
         Ungültiger Benutzername oder Passwort.
       </div>

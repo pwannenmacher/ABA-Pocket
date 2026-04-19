@@ -19,7 +19,7 @@
   {{if $isEdit}}action="/admin/symptoms/{{$symptom.ID}}/edit"{{else}}action="/admin/symptoms/new"{{end}}
   class="admin-form">
 
-  {{/* Zähler für das JS-Renaming */}}
+  <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
   <input type="hidden" id="tableCount" name="table_count" value="{{len $symptom.Tables}}">
 
   <div class="form-section">
