@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -8,6 +9,17 @@ import (
 
 	"github.com/go-chi/chi/v5"
 )
+
+func (h *Handler) Healthz(w http.ResponseWriter, r *http.Request) {
+	err := h.repos.Pool.Ping(r.Context())
+	w.Header().Set("Content-Type", "application/json")
+	if err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(map[string]string{"status": "unhealthy", "db": err.Error()})
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
 
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	symptoms, err := h.repos.Symptoms.List(r.Context())

@@ -73,6 +73,7 @@ func (h *Handler) Router() http.Handler {
 
 	// Static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
+	r.Get("/health", h.Healthz)
 
 	// Public routes
 	r.Get("/", h.Index)
