@@ -70,19 +70,19 @@ Für schnelle Template-Änderungen ohne Neustart: `DEV_MODE=true` in `.env` setz
 
 ## Umgebungsvariablen
 
-| Variable         | Pflicht | Standard                                                                | Beschreibung                              |
-|------------------|---------|-------------------------------------------------------------------------|-------------------------------------------|
-| `SESSION_SECRET` | ✅       | –                                                                       | Zufällige Zeichenkette, mind. 32 Zeichen  |
-| `DATABASE_URL`   | ✅       | `postgres://aba:aba_password@localhost:5432/aba_pocket?sslmode=disable` | PostgreSQL-Verbindungs-URL                |
-| `LISTEN_ADDR`    |         | `:8080`                                                                 | Bind-Adresse des HTTP-Servers             |
-| `ADMIN_USERNAME` |         | –                                                                       | Benutzername für den initialen Admin      |
-| `ADMIN_PASSWORD` |         | –                                                                       | Passwort für den initialen Admin          |
-| `DEV_MODE`       |         | `false`                                                                 | Template-Cache deaktivieren (Entwicklung) |
-| `IMPRINT_NAME`   |         | –                                                                       | Name für Impressum (§ 5 DDG)              |
-| `IMPRINT_STREET` |         | –                                                                       | Straße und Hausnummer (ggf. c/o)          |
-| `IMPRINT_ZIP`    |         | –                                                                       | Postleitzahl                              |
-| `IMPRINT_CITY`   |         | –                                                                       | Ort                                       |
-| `IMPRINT_EMAIL`  |         | –                                                                       | Kontakt-E-Mail                            |
+| Variable         | Pflicht | Standard | Beschreibung                              |
+|------------------|---------|----------|-------------------------------------------|
+| `SESSION_SECRET` | ✅       | –        | Zufällige Zeichenkette, mind. 32 Zeichen  |
+| `DATABASE_URL`   | ✅       | -        | PostgreSQL-Verbindungs-URL                |
+| `LISTEN_ADDR`    |         | `:8080`  | Bind-Adresse des HTTP-Servers             |
+| `ADMIN_USERNAME` |         | –        | Benutzername für den initialen Admin      |
+| `ADMIN_PASSWORD` |         | –        | Passwort für den initialen Admin          |
+| `DEV_MODE`       |         | `false`  | Template-Cache deaktivieren (Entwicklung) |
+| `IMPRINT_NAME`   |         | –        | Name für Impressum (§ 5 DDG)              |
+| `IMPRINT_STREET` |         | –        | Straße und Hausnummer (ggf. c/o)          |
+| `IMPRINT_ZIP`    |         | –        | Postleitzahl                              |
+| `IMPRINT_CITY`   |         | –        | Ort                                       |
+| `IMPRINT_EMAIL`  |         | –        | Kontakt-E-Mail                            |
 
 ## PDF-Layout
 

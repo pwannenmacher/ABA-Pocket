@@ -33,7 +33,7 @@ type Config struct {
 func Load() *Config {
 	cfg := &Config{
 		ListenAddr:    getEnv("LISTEN_ADDR", ":8080"),
-		DatabaseURL:   getEnv("DATABASE_URL", "postgres://aba:aba_password@localhost:5432/aba_pocket?sslmode=disable"),
+		DatabaseURL:   getEnv("DATABASE_URL", ""),
 		SessionSecret: getEnv("SESSION_SECRET", ""),
 		AdminUsername: getEnv("ADMIN_USERNAME", ""),
 		AdminPassword: getEnv("ADMIN_PASSWORD", ""),
