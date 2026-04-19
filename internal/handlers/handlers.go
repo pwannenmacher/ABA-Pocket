@@ -48,8 +48,7 @@ func New(cfg *config.Config, repos *repository.Repositories) *Handler {
 			}
 			return string([]rune(s)[:n]) + "…"
 		},
-		"safeHTML": func(s string) template.HTML { return template.HTML(s) },
-		"add":      func(a, b int) int { return a + b },
+		"add": func(a, b int) int { return a + b },
 	}
 	return h
 }
@@ -75,7 +74,7 @@ func (h *Handler) Router() http.Handler {
 
 	// Static files
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
-	r.Get("/health", h.Healthz)
+	r.Get("/health", h.Health)
 
 	// Public routes
 	r.Get("/", h.Index)
@@ -95,11 +94,12 @@ func (h *Handler) Router() http.Handler {
 	// Admin routes
 	r.Get("/admin/login", h.AdminLogin)
 	r.Post("/admin/login", h.AdminLoginPost)
-	r.Post("/admin/logout", h.AdminLogout)
 
 	r.Route("/admin", func(r chi.Router) {
 		r.Use(auth.Middleware(h.repos))
 		r.Use(h.csrfProtect)
+
+		r.Post("/logout", h.AdminLogout)
 
 		r.Get("/", h.AdminDashboard)
 
@@ -170,7 +170,7 @@ func (h *Handler) getAdminTemplate(name string) (*template.Template, error) {
 	})
 }
 
-func (h *Handler) render(w http.ResponseWriter, status int, page string, data interface{}) {
+func (h *Handler) render(w http.ResponseWriter, status int, page string, data any) {
 	t, err := h.getTemplate(page)
 	if err != nil {
 		log.Printf("template parse error (%s): %v", page, err)
@@ -184,7 +184,7 @@ func (h *Handler) render(w http.ResponseWriter, status int, page string, data in
 	}
 }
 
-func (h *Handler) renderAdmin(w http.ResponseWriter, r *http.Request, status int, page string, data interface{}) {
+func (h *Handler) renderAdmin(w http.ResponseWriter, r *http.Request, status int, page string, data any) {
 	// CSRF-Token automatisch in PageData einfügen
 	if pd, ok := data.(PageData); ok && pd.CSRFToken == "" {
 		pd.CSRFToken = auth.CSRFTokenFromRequest(r, h.cfg.SessionSecret)
@@ -238,7 +238,7 @@ type PageData struct {
 	User      *models.User
 	Flash     string
 	CSRFToken string
-	Data      interface{}
+	Data      any
 }
 
 // csrfProtect validiert CSRF-Tokens bei POST-Requests.

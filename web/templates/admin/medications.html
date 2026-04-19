@@ -19,7 +19,7 @@
     <tbody>
       {{range .Data}}
       <tr>
-        <td><a href="/medications/{{.ID}}" target="_blank" class="table-link">{{.Name}}</a></td>
+        <td><a href="/medications/{{.ID}}" class="table-link">{{.Name}}</a></td>
         <td class="text-muted">{{.Source}}</td>
         <td class="text-muted">{{formatDate .UpdatedAt}}</td>
         <td class="actions-cell">

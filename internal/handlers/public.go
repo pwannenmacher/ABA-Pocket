@@ -10,15 +10,16 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func (h *Handler) Healthz(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	err := h.repos.Pool.Ping(r.Context())
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
+		log.Printf("healthcheck: db ping failed: %v", err)
 		w.WriteHeader(http.StatusServiceUnavailable)
-		json.NewEncoder(w).Encode(map[string]string{"status": "unhealthy", "db": err.Error()})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "unhealthy"})
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 
 	h.render(w, http.StatusOK, "index", PageData{
 		Title: "ABA Pocket – Notfallmedizin",
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"Symptoms":    symptoms,
 			"Medications": medications,
 		},
@@ -104,11 +105,11 @@ func (h *Handler) GetMedication(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) Disclaimer(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Disclaimer(w http.ResponseWriter, _ *http.Request) {
 	h.render(w, http.StatusOK, "disclaimer", PageData{Title: "Haftungsausschluss"})
 }
 
-func (h *Handler) Imprint(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Imprint(w http.ResponseWriter, _ *http.Request) {
 	h.render(w, http.StatusOK, "imprint", PageData{
 		Title: "Impressum & Datenschutz",
 		Data: map[string]string{
@@ -133,7 +134,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 		}
 		h.render(w, http.StatusOK, "search", PageData{
 			Title: "Suche",
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"Query":       "",
 				"Symptoms":    nil,
 				"Medications": nil,
@@ -151,7 +152,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 		medications = nil
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"Query":       q,
 		"Symptoms":    symptoms,
 		"Medications": medications,

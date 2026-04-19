@@ -27,7 +27,7 @@ func (h *Handler) AdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := t.ExecuteTemplate(w, "login_page", map[string]interface{}{
+	if err := t.ExecuteTemplate(w, "login_page", map[string]any{
 		"Error": r.URL.Query().Get("error"),
 	}); err != nil {
 		log.Printf("login template error: %v", err)
@@ -85,7 +85,7 @@ func (h *Handler) AdminLogout(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	auth.ClearSessionCookie(w)
-	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────
@@ -108,7 +108,7 @@ func (h *Handler) AdminDashboard(w http.ResponseWriter, r *http.Request) {
 		Title: "Dashboard",
 		User:  auth.UserFromContext(r.Context()),
 		Flash: getFlash(w, r),
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"SymptomCount":    symCount,
 			"MedicationCount": medCount,
 			"UserCount":       userCount,
@@ -140,7 +140,7 @@ func (h *Handler) AdminNewSymptom(w http.ResponseWriter, r *http.Request) {
 	h.renderAdmin(w, r, http.StatusOK, "symptom_form", PageData{
 		Title: "Neues Leitsymptom",
 		User:  auth.UserFromContext(r.Context()),
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"Symptom":           &models.Symptom{},
 			"AllMedications":    medications,
 			"LinkedMedications": map[int64]bool{},
@@ -169,7 +169,7 @@ func (h *Handler) AdminCreateSymptom(w http.ResponseWriter, r *http.Request) {
 		h.renderAdmin(w, r, http.StatusUnprocessableEntity, "symptom_form", PageData{
 			Title: "Neues Leitsymptom",
 			User:  auth.UserFromContext(r.Context()),
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"Symptom":           s,
 				"AllMedications":    medications,
 				"LinkedMedications": map[int64]bool{},
@@ -220,7 +220,7 @@ func (h *Handler) AdminEditSymptom(w http.ResponseWriter, r *http.Request) {
 	h.renderAdmin(w, r, http.StatusOK, "symptom_form", PageData{
 		Title: "Leitsymptom bearbeiten",
 		User:  auth.UserFromContext(r.Context()),
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"Symptom":           symptom,
 			"AllMedications":    medications,
 			"LinkedMedications": linkedIDs,
@@ -294,7 +294,7 @@ func (h *Handler) AdminNewMedication(w http.ResponseWriter, r *http.Request) {
 	h.renderAdmin(w, r, http.StatusOK, "medication_form", PageData{
 		Title: "Neues Medikament",
 		User:  auth.UserFromContext(r.Context()),
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"Medication": &models.Medication{},
 			"IsEdit":     false,
 		},
@@ -317,7 +317,7 @@ func (h *Handler) AdminCreateMedication(w http.ResponseWriter, r *http.Request) 
 		h.renderAdmin(w, r, http.StatusUnprocessableEntity, "medication_form", PageData{
 			Title: "Neues Medikament",
 			User:  auth.UserFromContext(r.Context()),
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"Medication": m,
 				"IsEdit":     false,
 				"Error":      "Bitte geben Sie einen Namen an.",
@@ -358,7 +358,7 @@ func (h *Handler) AdminEditMedication(w http.ResponseWriter, r *http.Request) {
 	h.renderAdmin(w, r, http.StatusOK, "medication_form", PageData{
 		Title: "Medikament bearbeiten",
 		User:  auth.UserFromContext(r.Context()),
-		Data: map[string]interface{}{
+		Data: map[string]any{
 			"Medication": medication,
 			"IsEdit":     true,
 		},

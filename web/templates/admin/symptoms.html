@@ -20,7 +20,7 @@
     <tbody>
       {{range .Data}}
       <tr>
-        <td><a href="/symptoms/{{.ID}}" target="_blank" class="table-link">{{.Title}}</a></td>
+        <td><a href="/symptoms/{{.ID}}" class="table-link">{{.Title}}</a></td>
         <td class="text-center">–</td>
         <td class="text-muted">{{.Source}}</td>
         <td class="text-muted">{{formatDate .UpdatedAt}}</td>

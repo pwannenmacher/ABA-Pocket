@@ -20,11 +20,12 @@
         <li><a href="/admin/symptoms" class="admin-nav-link">Leitsymptome</a></li>
         <li><a href="/admin/medications" class="admin-nav-link">Medikamente</a></li>
         <li><a href="/admin/users" class="admin-nav-link">Benutzer</a></li>
-        <li><a href="/" class="admin-nav-link" target="_blank">↗ Website</a></li>
+        <li><a href="/" class="admin-nav-link">zurück zur Website</a></li>
         {{if .User}}
         <li class="admin-user-info">{{.User.Username}}</li>
         <li>
           <form method="post" action="/admin/logout" style="display:inline">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
             <button type="submit" class="btn-logout">Abmelden</button>
           </form>
         </li>
