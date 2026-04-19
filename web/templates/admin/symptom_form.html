@@ -1,0 +1,98 @@
+{{define "admin_title"}}{{if (index .Data "IsEdit")}}Leitsymptom bearbeiten{{else}}Neues Leitsymptom{{end}}{{end}}
+{{define "admin_content"}}
+{{$symptom := index .Data "Symptom"}}
+{{$allMeds := index .Data "AllMedications"}}
+{{$linked := index .Data "LinkedMedications"}}
+{{$isEdit := index .Data "IsEdit"}}
+{{$error := index .Data "Error"}}
+
+<div class="page-header">
+  <h1>{{if $isEdit}}Leitsymptom bearbeiten{{else}}Neues Leitsymptom{{end}}</h1>
+  <a href="/admin/symptoms" class="btn btn-outline">← Zurück</a>
+</div>
+
+{{if $error}}
+<div class="alert alert-error">{{$error}}</div>
+{{end}}
+
+<form method="post"
+  {{if $isEdit}}action="/admin/symptoms/{{$symptom.ID}}/edit"{{else}}action="/admin/symptoms/new"{{end}}
+  class="admin-form">
+
+  <div class="form-section">
+    <h2 class="form-section-title">Allgemein</h2>
+    <div class="form-group">
+      <label for="title">Titel / Leitsymptom <span class="required">*</span></label>
+      <input type="text" id="title" name="title" class="form-input"
+        value="{{$symptom.Title}}" required placeholder="z.B. Anaphylaxie">
+    </div>
+    <div class="form-group">
+      <label for="description">Kurzbeschreibung (Markdown)</label>
+      <textarea id="description" name="description" class="form-textarea" rows="3"
+        placeholder="Optionaler einleitender Text (Markdown unterstützt)">{{$symptom.Description}}</textarea>
+    </div>
+    <div class="form-group">
+      <label for="source">Quelle / Literaturangabe</label>
+      <input type="text" id="source" name="source" class="form-input"
+        value="{{$symptom.Source}}" placeholder="z.B. AWMF-Leitlinie 2023">
+    </div>
+  </div>
+
+  <div class="form-section">
+    <h2 class="form-section-title">Tabelleneinträge</h2>
+    <p class="form-hint">Beide Spalten unterstützen Markdown: <code>**fett**</code>, <code>- Liste</code>, Zeilenumbruch mit Leerzeile.</p>
+    <div class="entries-table-wrap">
+      <table class="entries-table" id="entriesTable">
+        <thead>
+          <tr>
+            <th style="width:38%">Schlüssel (linke Spalte)</th>
+            <th style="width:54%">Wert (rechte Spalte)</th>
+            <th style="width:8%"></th>
+          </tr>
+        </thead>
+        <tbody id="entriesBody">
+          {{range $symptom.Entries}}
+          <tr class="entry-row">
+            <td><textarea name="entry_left[]" class="entry-input" rows="2">{{.LeftCol}}</textarea></td>
+            <td><textarea name="entry_right[]" class="entry-input" rows="2">{{.RightCol}}</textarea></td>
+            <td class="entry-action"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button></td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    <button type="button" class="btn btn-secondary btn-sm"
+      hx-get="/admin/entries/row"
+      hx-target="#entriesBody"
+      hx-swap="beforeend">
+      + Zeile hinzufügen
+    </button>
+  </div>
+
+  {{if $allMeds}}
+  <div class="form-section">
+    <h2 class="form-section-title">Verknüpfte Medikamente</h2>
+    <p class="form-hint">Medikamente auswählen, die mit diesem Leitsymptom verknüpft werden sollen.</p>
+    <div class="checkbox-grid">
+      {{range $allMeds}}
+      <label class="checkbox-label">
+        <input type="checkbox" name="medication_ids[]" value="{{.ID}}"
+          {{if index $linked .ID}}checked{{end}}>
+        <span>{{.Name}}</span>
+      </label>
+      {{end}}
+    </div>
+  </div>
+  {{end}}
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">
+      {{if $isEdit}}Änderungen speichern{{else}}Leitsymptom erstellen{{end}}
+    </button>
+    <a href="/admin/symptoms" class="btn btn-outline">Abbrechen</a>
+    {{if $isEdit}}
+    <a href="/symptoms/{{$symptom.ID}}" class="btn btn-outline" target="_blank">Vorschau ↗</a>
+    {{end}}
+  </div>
+</form>
+{{end}}

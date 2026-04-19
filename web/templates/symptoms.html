@@ -1,0 +1,25 @@
+{{define "page_title"}}Leitsymptome{{end}}
+{{define "page_content"}}
+<div class="page-header">
+  <h1 class="symptom-title">Leitsymptome</h1>
+  <a href="/pdf/all" class="btn btn-outline btn-sm" target="_blank">📄 Alle als PDF</a>
+</div>
+
+{{if .Data}}
+<ul class="card-list card-list-full">
+  {{range .Data}}
+  <li>
+    <a href="/symptoms/{{.ID}}" class="card-list-item symptom-item">
+      <span class="card-title">{{.Title}}</span>
+      <span class="card-meta">
+        {{if .Source}}<span class="card-source">{{.Source}}</span>{{end}}
+        <span class="card-updated">Stand: {{formatDate .UpdatedAt}}</span>
+      </span>
+    </a>
+  </li>
+  {{end}}
+</ul>
+{{else}}
+<p class="empty-state">Noch keine Leitsymptome vorhanden.</p>
+{{end}}
+{{end}}

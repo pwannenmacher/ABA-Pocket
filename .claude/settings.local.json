@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go mod:*)",
+      "Bash(GOPROXY=https://proxy.golang.org go list -m -versions github.com/go-pdf/fpdf)",
+      "Bash(curl -s \"https://proxy.golang.org/github.com/go-pdf/fpdf/@v/list\")",
+      "Bash(go build:*)"
+    ]
+  }
+}

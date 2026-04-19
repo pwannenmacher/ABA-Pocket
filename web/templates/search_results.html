@@ -1,0 +1,27 @@
+{{define "search_results"}}
+{{$q := index . "Query"}}
+{{$symptoms := index . "Symptoms"}}
+{{$medications := index . "Medications"}}
+
+{{if $q}}
+  {{if $symptoms}}
+  <div class="dropdown-section">
+    <div class="dropdown-label">Leitsymptome</div>
+    {{range $symptoms}}
+    <a href="/symptoms/{{.ID}}" class="dropdown-item symptom-item">{{.Title}}</a>
+    {{end}}
+  </div>
+  {{end}}
+  {{if $medications}}
+  <div class="dropdown-section">
+    <div class="dropdown-label">Medikamente</div>
+    {{range $medications}}
+    <a href="/medications/{{.ID}}" class="dropdown-item medication-item">{{.Name}}</a>
+    {{end}}
+  </div>
+  {{end}}
+  {{if and (eq (len $symptoms) 0) (eq (len $medications) 0)}}
+  <div class="dropdown-empty">Keine Ergebnisse</div>
+  {{end}}
+{{end}}
+{{end}}
