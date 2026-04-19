@@ -81,6 +81,8 @@ func (h *Handler) Router() http.Handler {
 	r.Get("/medications", h.ListMedications)
 	r.Get("/medications/{id}", h.GetMedication)
 	r.Get("/search", h.Search)
+	r.Get("/disclaimer", h.Disclaimer)
+	r.Get("/imprint", h.Imprint)
 
 	// PDF export
 	r.Get("/pdf/symptoms/{id}", h.PDFSymptom)

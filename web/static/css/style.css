@@ -181,6 +181,57 @@ code {
   font-size: .85rem;
 }
 
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.footer-links a {
+  color: rgba(255,255,255,.55);
+  font-size: .8rem;
+  text-decoration: none;
+}
+
+.footer-links a:hover { color: rgba(255,255,255,.9); text-decoration: underline; }
+
+/* ── Legal pages (Impressum, Haftungsausschluss) ────────────── */
+
+.disclaimer-banner {
+  background: #fef9e7;
+  border: 1px solid #f0d060;
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  margin-bottom: 24px;
+  font-size: .88rem;
+  color: #7d6608;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.disclaimer-banner a { color: #856404; font-weight: 600; }
+
+.legal-page { max-width: 740px; }
+.legal-page h1 { font-size: 1.7rem; margin-bottom: 20px; }
+
+.legal-highlight {
+  background: #fef3cd;
+  border: 1px solid #f0d060;
+  border-left: 4px solid #d4a017;
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  font-size: .95rem;
+  line-height: 1.6;
+}
+
+.legal-section { margin-bottom: 24px; }
+.legal-section h2 { font-size: 1.1rem; margin-bottom: 8px; color: var(--color-primary); }
+.legal-section p  { margin-bottom: 10px; line-height: 1.7; }
+.legal-section ul { margin: 8px 0 10px 20px; line-height: 1.7; }
+.legal-section li { margin-bottom: 4px; }
+
 /* ── Hero ────────────────────────────────────────────────────── */
 
 .hero {

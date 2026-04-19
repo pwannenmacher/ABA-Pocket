@@ -92,6 +92,23 @@ func (h *Handler) GetMedication(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) Disclaimer(w http.ResponseWriter, r *http.Request) {
+	h.render(w, http.StatusOK, "disclaimer", PageData{Title: "Haftungsausschluss"})
+}
+
+func (h *Handler) Imprint(w http.ResponseWriter, r *http.Request) {
+	h.render(w, http.StatusOK, "imprint", PageData{
+		Title: "Impressum & Datenschutz",
+		Data: map[string]string{
+			"Name":   h.cfg.ImprintName,
+			"Street": h.cfg.ImprintStreet,
+			"Zip":    h.cfg.ImprintZip,
+			"City":   h.cfg.ImprintCity,
+			"Email":  h.cfg.ImprintEmail,
+		},
+	})
+}
+
 func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 
