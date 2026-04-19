@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -98,7 +99,6 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 
 	if q == "" {
 		if isHtmx {
-			w.Write([]byte(""))
 			return
 		}
 		h.render(w, http.StatusOK, "search", PageData{
@@ -128,13 +128,14 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isHtmx {
-		// Return only the results partial (inline in search.html)
 		t, err := h.getTemplate("search")
 		if err != nil {
 			http.Error(w, "Fehler", http.StatusInternalServerError)
 			return
 		}
-		t.ExecuteTemplate(w, "search_results", data)
+		if err := t.ExecuteTemplate(w, "search_results", data); err != nil {
+			log.Printf("search_results template error: %v", err)
+		}
 		return
 	}
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -26,9 +27,11 @@ func (h *Handler) AdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	t.ExecuteTemplate(w, "login_page", map[string]interface{}{
+	if err := t.ExecuteTemplate(w, "login_page", map[string]interface{}{
 		"Error": r.URL.Query().Get("error"),
-	})
+	}); err != nil {
+		log.Printf("login template error: %v", err)
+	}
 }
 
 func (h *Handler) AdminLoginPost(w http.ResponseWriter, r *http.Request) {
@@ -65,9 +68,10 @@ func (h *Handler) AdminLoginPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) AdminLogout(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie(auth.SessionCookieName)
-	if err == nil {
-		h.repos.Users.DeleteSession(r.Context(), cookie.Value)
+	if cookie, err := r.Cookie(auth.SessionCookieName); err == nil {
+		if err := h.repos.Users.DeleteSession(r.Context(), cookie.Value); err != nil {
+			log.Printf("delete session error: %v", err)
+		}
 	}
 	auth.ClearSessionCookie(w)
 	http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
@@ -76,9 +80,18 @@ func (h *Handler) AdminLogout(w http.ResponseWriter, r *http.Request) {
 // ─── Dashboard ─────────────────────────────────────────────────────────────
 
 func (h *Handler) AdminDashboard(w http.ResponseWriter, r *http.Request) {
-	symCount, _ := h.repos.Symptoms.Count(r.Context())
-	medCount, _ := h.repos.Medications.Count(r.Context())
-	userCount, _ := h.repos.Users.Count(r.Context())
+	symCount, err := h.repos.Symptoms.Count(r.Context())
+	if err != nil {
+		log.Printf("dashboard symptom count: %v", err)
+	}
+	medCount, err := h.repos.Medications.Count(r.Context())
+	if err != nil {
+		log.Printf("dashboard medication count: %v", err)
+	}
+	userCount, err := h.repos.Users.Count(r.Context())
+	if err != nil {
+		log.Printf("dashboard user count: %v", err)
+	}
 
 	h.renderAdmin(w, http.StatusOK, "dashboard", PageData{
 		Title: "Dashboard",
@@ -109,7 +122,10 @@ func (h *Handler) AdminListSymptoms(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) AdminNewSymptom(w http.ResponseWriter, r *http.Request) {
-	medications, _ := h.repos.Medications.List(r.Context())
+	medications, err := h.repos.Medications.List(r.Context())
+	if err != nil {
+		log.Printf("load medications for symptom form: %v", err)
+	}
 	h.renderAdmin(w, http.StatusOK, "symptom_form", PageData{
 		Title: "Neues Leitsymptom",
 		User:  auth.UserFromContext(r.Context()),
@@ -135,7 +151,10 @@ func (h *Handler) AdminCreateSymptom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if s.Title == "" {
-		medications, _ := h.repos.Medications.List(r.Context())
+		medications, err := h.repos.Medications.List(r.Context())
+		if err != nil {
+			log.Printf("load medications for symptom form: %v", err)
+		}
 		h.renderAdmin(w, http.StatusUnprocessableEntity, "symptom_form", PageData{
 			Title: "Neues Leitsymptom",
 			User:  auth.UserFromContext(r.Context()),
@@ -156,18 +175,16 @@ func (h *Handler) AdminCreateSymptom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tables := parseSymptomTables(r)
-	h.repos.Symptoms.ReplaceTablesAndRows(r.Context(), id, tables)
-
-	medIDs := parseMedicationIDs(r)
-	h.repos.Symptoms.SetMedications(r.Context(), id, medIDs)
+	if !h.saveSymptomRelations(w, r, id) {
+		return
+	}
 
 	setFlash(w, fmt.Sprintf("Leitsymptom \"%s\" wurde erstellt.", s.Title))
 	http.Redirect(w, r, "/admin/symptoms", http.StatusSeeOther)
 }
 
 func (h *Handler) AdminEditSymptom(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := parseID(r)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -179,8 +196,15 @@ func (h *Handler) AdminEditSymptom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	medications, _ := h.repos.Medications.List(r.Context())
-	linkedIDs, _ := h.repos.Symptoms.GetLinkedMedicationIDs(r.Context(), id)
+	medications, err := h.repos.Medications.List(r.Context())
+	if err != nil {
+		log.Printf("load medications for symptom form: %v", err)
+	}
+	linkedIDs, err := h.repos.Symptoms.GetLinkedMedicationIDs(r.Context(), id)
+	if err != nil {
+		log.Printf("load linked medication IDs: %v", err)
+		linkedIDs = map[int64]bool{}
+	}
 
 	h.renderAdmin(w, http.StatusOK, "symptom_form", PageData{
 		Title: "Leitsymptom bearbeiten",
@@ -195,7 +219,7 @@ func (h *Handler) AdminEditSymptom(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) AdminUpdateSymptom(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := parseID(r)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -217,23 +241,24 @@ func (h *Handler) AdminUpdateSymptom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tables := parseSymptomTables(r)
-	h.repos.Symptoms.ReplaceTablesAndRows(r.Context(), id, tables)
-
-	medIDs := parseMedicationIDs(r)
-	h.repos.Symptoms.SetMedications(r.Context(), id, medIDs)
+	if !h.saveSymptomRelations(w, r, id) {
+		return
+	}
 
 	setFlash(w, fmt.Sprintf("Leitsymptom \"%s\" wurde gespeichert.", s.Title))
 	http.Redirect(w, r, "/admin/symptoms", http.StatusSeeOther)
 }
 
 func (h *Handler) AdminDeleteSymptom(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := parseID(r)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	h.repos.Symptoms.Delete(r.Context(), id)
+	if err := h.repos.Symptoms.Delete(r.Context(), id); err != nil {
+		http.Error(w, "Fehler beim Löschen", http.StatusInternalServerError)
+		return
+	}
 	setFlash(w, "Leitsymptom wurde gelöscht.")
 	http.Redirect(w, r, "/admin/symptoms", http.StatusSeeOther)
 }
@@ -297,14 +322,17 @@ func (h *Handler) AdminCreateMedication(w http.ResponseWriter, r *http.Request) 
 	}
 
 	entries := parseEntries(r)
-	h.repos.Medications.ReplaceEntries(r.Context(), id, entries)
+	if err := h.repos.Medications.ReplaceEntries(r.Context(), id, entries); err != nil {
+		http.Error(w, "Fehler beim Speichern der Einträge", http.StatusInternalServerError)
+		return
+	}
 
 	setFlash(w, fmt.Sprintf("Medikament \"%s\" wurde erstellt.", m.Name))
 	http.Redirect(w, r, "/admin/medications", http.StatusSeeOther)
 }
 
 func (h *Handler) AdminEditMedication(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := parseID(r)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -327,7 +355,7 @@ func (h *Handler) AdminEditMedication(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) AdminUpdateMedication(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := parseID(r)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -350,19 +378,25 @@ func (h *Handler) AdminUpdateMedication(w http.ResponseWriter, r *http.Request) 
 	}
 
 	entries := parseEntries(r)
-	h.repos.Medications.ReplaceEntries(r.Context(), id, entries)
+	if err := h.repos.Medications.ReplaceEntries(r.Context(), id, entries); err != nil {
+		http.Error(w, "Fehler beim Speichern der Einträge", http.StatusInternalServerError)
+		return
+	}
 
 	setFlash(w, fmt.Sprintf("Medikament \"%s\" wurde gespeichert.", m.Name))
 	http.Redirect(w, r, "/admin/medications", http.StatusSeeOther)
 }
 
 func (h *Handler) AdminDeleteMedication(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := parseID(r)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	h.repos.Medications.Delete(r.Context(), id)
+	if err := h.repos.Medications.Delete(r.Context(), id); err != nil {
+		http.Error(w, "Fehler beim Löschen", http.StatusInternalServerError)
+		return
+	}
 	setFlash(w, "Medikament wurde gelöscht.")
 	http.Redirect(w, r, "/admin/medications", http.StatusSeeOther)
 }
@@ -422,7 +456,7 @@ func (h *Handler) AdminCreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := parseID(r)
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -436,24 +470,50 @@ func (h *Handler) AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.repos.Users.Delete(r.Context(), id)
+	if err := h.repos.Users.Delete(r.Context(), id); err != nil {
+		http.Error(w, "Fehler beim Löschen", http.StatusInternalServerError)
+		return
+	}
 	setFlash(w, "Benutzer wurde gelöscht.")
 	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
 }
 
 // ─── HTMX fragments ────────────────────────────────────────────────────────
 
-func (h *Handler) AdminEntryRow(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(`
+func (h *Handler) AdminEntryRow(w http.ResponseWriter, _ *http.Request) {
+	const html = `
 <tr class="entry-row">
   <td><textarea name="entry_left[]" class="entry-input" placeholder="Schlüssel (Markdown möglich)" rows="2"></textarea></td>
   <td><textarea name="entry_right[]" class="entry-input" placeholder="Wert (Markdown möglich)" rows="2"></textarea></td>
   <td class="entry-action"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button></td>
-</tr>`))
+</tr>`
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if _, err := fmt.Fprint(w, html); err != nil {
+		log.Printf("write entry row: %v", err)
+	}
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
+
+// parseID parses the "id" URL parameter as int64.
+func parseID(r *http.Request) (int64, error) {
+	return strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+}
+
+// saveSymptomRelations speichert Tabellen und Medikamentenverknüpfungen eines Leitsymptoms.
+func (h *Handler) saveSymptomRelations(w http.ResponseWriter, r *http.Request, id int64) bool {
+	tables := parseSymptomTables(r)
+	if err := h.repos.Symptoms.ReplaceTablesAndRows(r.Context(), id, tables); err != nil {
+		http.Error(w, "Fehler beim Speichern der Tabellen", http.StatusInternalServerError)
+		return false
+	}
+	medIDs := parseMedicationIDs(r)
+	if err := h.repos.Symptoms.SetMedications(r.Context(), id, medIDs); err != nil {
+		http.Error(w, "Fehler beim Speichern der Medikamente", http.StatusInternalServerError)
+		return false
+	}
+	return true
+}
 
 // parseSymptomTables liest die Tabellen-Struktur aus dem Formular.
 // Das JS renumberSymptomTables() benennt die Felder vor dem Submit um:

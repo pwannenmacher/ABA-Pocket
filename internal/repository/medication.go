@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"fmt"
-	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"aba-pocket/internal/models"
@@ -25,17 +25,11 @@ func (r *MedicationRepository) List(ctx context.Context) ([]*models.Medication, 
 	if err != nil {
 		return nil, fmt.Errorf("list medications: %w", err)
 	}
-	defer rows.Close()
-
-	var medications []*models.Medication
-	for rows.Next() {
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (*models.Medication, error) {
 		m := &models.Medication{}
-		if err := rows.Scan(&m.ID, &m.Name, &m.Description, &m.Source, &m.CreatedAt, &m.UpdatedAt); err != nil {
-			return nil, err
-		}
-		medications = append(medications, m)
-	}
-	return medications, rows.Err()
+		err := row.Scan(&m.ID, &m.Name, &m.Description, &m.Source, &m.CreatedAt, &m.UpdatedAt)
+		return m, err
+	})
 }
 
 func (r *MedicationRepository) GetByID(ctx context.Context, id int64) (*models.Medication, error) {
@@ -64,16 +58,12 @@ func (r *MedicationRepository) loadEntries(ctx context.Context, m *models.Medica
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		e := models.CardEntry{}
-		if err := rows.Scan(&e.ID, &e.LeftCol, &e.RightCol, &e.SortOrder); err != nil {
-			return err
-		}
+	var e models.CardEntry
+	_, err = pgx.ForEachRow(rows, []any{&e.ID, &e.LeftCol, &e.RightCol, &e.SortOrder}, func() error {
 		m.Entries = append(m.Entries, e)
-	}
-	return rows.Err()
+		return nil
+	})
+	return err
 }
 
 func (r *MedicationRepository) loadSymptoms(ctx context.Context, m *models.Medication) error {
@@ -86,16 +76,13 @@ func (r *MedicationRepository) loadSymptoms(ctx context.Context, m *models.Medic
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		s := &models.Symptom{}
-		if err := rows.Scan(&s.ID, &s.Title, &s.Source, &s.UpdatedAt); err != nil {
-			return err
-		}
-		m.Symptoms = append(m.Symptoms, s)
-	}
-	return rows.Err()
+	var s models.Symptom
+	_, err = pgx.ForEachRow(rows, []any{&s.ID, &s.Title, &s.Source, &s.UpdatedAt}, func() error {
+		sym := s
+		m.Symptoms = append(m.Symptoms, &sym)
+		return nil
+	})
+	return err
 }
 
 func (r *MedicationRepository) Create(ctx context.Context, m *models.Medication) (int64, error) {
@@ -114,9 +101,9 @@ func (r *MedicationRepository) Create(ctx context.Context, m *models.Medication)
 
 func (r *MedicationRepository) Update(ctx context.Context, m *models.Medication) error {
 	_, err := r.pool.Exec(ctx, `
-		UPDATE medications SET name=$1, description=$2, source=$3, updated_at=$4
-		WHERE id=$5`,
-		m.Name, m.Description, m.Source, time.Now(), m.ID,
+		UPDATE medications SET name=$1, description=$2, source=$3, updated_at=NOW()
+		WHERE id=$4`,
+		m.Name, m.Description, m.Source, m.ID,
 	)
 	return err
 }
@@ -131,20 +118,18 @@ func (r *MedicationRepository) ReplaceEntries(ctx context.Context, medicationID 
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // no-op after Commit
 
-	_, err = tx.Exec(ctx, `DELETE FROM medication_entries WHERE medication_id = $1`, medicationID)
-	if err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM medication_entries WHERE medication_id = $1`, medicationID); err != nil {
 		return err
 	}
 
 	for i, e := range entries {
-		_, err = tx.Exec(ctx, `
+		if _, err := tx.Exec(ctx, `
 			INSERT INTO medication_entries (medication_id, left_col, right_col, sort_order)
 			VALUES ($1, $2, $3, $4)`,
 			medicationID, e.LeftCol, e.RightCol, i,
-		)
-		if err != nil {
+		); err != nil {
 			return err
 		}
 	}
@@ -162,17 +147,11 @@ func (r *MedicationRepository) Search(ctx context.Context, query string) ([]*mod
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var results []*models.Medication
-	for rows.Next() {
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (*models.Medication, error) {
 		m := &models.Medication{}
-		if err := rows.Scan(&m.ID, &m.Name, &m.Description, &m.Source, &m.UpdatedAt); err != nil {
-			return nil, err
-		}
-		results = append(results, m)
-	}
-	return results, rows.Err()
+		err := row.Scan(&m.ID, &m.Name, &m.Description, &m.Source, &m.UpdatedAt)
+		return m, err
+	})
 }
 
 func (r *MedicationRepository) Count(ctx context.Context) (int, error) {

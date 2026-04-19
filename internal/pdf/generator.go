@@ -89,8 +89,10 @@ func output(pdf *fpdf.Fpdf) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-var reBold = regexp.MustCompile(`\*\*(.+?)\*\*`)
-var reItalic = regexp.MustCompile(`\*(.+?)\*`)
+var (
+	reBold   = regexp.MustCompile(`\*\*(.+?)\*\*`)
+	reItalic = regexp.MustCompile(`\*(.+?)\*`)
+)
 
 func stripMarkdown(s string) string {
 	s = reBold.ReplaceAllString(s, "$1")
@@ -356,5 +358,5 @@ func renderEmpty(pdf *fpdf.Fpdf, tr func(string) string, x, y, w float64) {
 	pdf.SetTextColor(160, 160, 160)
 	pdf.SetFont("Helvetica", "I", 7)
 	pdf.SetXY(x+2, y+2)
-	pdf.CellFormat(w-4, 6, tr("Keine Eintr\xe4ge"), "", 0, "LT", false, 0, "")
+	pdf.CellFormat(w-4, 6, tr("Keine Einträge"), "", 0, "LT", false, 0, "")
 }

@@ -4,60 +4,49 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
-
 	"aba-pocket/internal/models"
 	"aba-pocket/internal/pdf"
 )
 
 func (h *Handler) PDFSymptom(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := parseID(r)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-
 	symptom, err := h.repos.Symptoms.GetByID(r.Context(), id)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-
-	card := symptomToCard(symptom)
-	data, err := pdf.GenerateSingleCard(card)
-	if err != nil {
-		http.Error(w, "PDF-Generierung fehlgeschlagen", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", "inline; filename=\"symptom-"+strconv.FormatInt(id, 10)+".pdf\"")
-	w.Write(data)
+	data, err := pdf.GenerateSingleCard(symptomToCard(symptom))
+	servePDF(w, data, err, "symptom-"+strconv.FormatInt(id, 10)+".pdf", "inline")
 }
 
 func (h *Handler) PDFMedication(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := parseID(r)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-
 	medication, err := h.repos.Medications.GetByID(r.Context(), id)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
+	data, err := pdf.GenerateSingleCard(medicationToCard(medication))
+	servePDF(w, data, err, "medication-"+strconv.FormatInt(id, 10)+".pdf", "inline")
+}
 
-	card := medicationToCard(medication)
-	data, err := pdf.GenerateSingleCard(card)
+// servePDF writes a generated PDF to the response or returns an error.
+func servePDF(w http.ResponseWriter, data []byte, err error, filename, disposition string) {
 	if err != nil {
 		http.Error(w, "PDF-Generierung fehlgeschlagen", http.StatusInternalServerError)
 		return
 	}
-
 	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", "inline; filename=\"medication-"+strconv.FormatInt(id, 10)+".pdf\"")
-	w.Write(data)
+	w.Header().Set("Content-Disposition", disposition+"; filename=\""+filename+"\"")
+	_, _ = w.Write(data)
 }
 
 func (h *Handler) PDFAll(w http.ResponseWriter, r *http.Request) {
@@ -90,14 +79,7 @@ func (h *Handler) PDFAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data, err := pdf.GenerateAllCards(cards)
-	if err != nil {
-		http.Error(w, "PDF-Generierung fehlgeschlagen", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", "attachment; filename=\"aba-pocket-karten.pdf\"")
-	w.Write(data)
+	servePDF(w, data, err, "aba-pocket-karten.pdf", "attachment")
 }
 
 func symptomToCard(s *models.Symptom) pdf.CardData {

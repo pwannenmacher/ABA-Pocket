@@ -49,17 +49,6 @@ func New(cfg *config.Config, repos *repository.Repositories) *Handler {
 		},
 		"safeHTML": func(s string) template.HTML { return template.HTML(s) },
 		"add":      func(a, b int) int { return a + b },
-		"not":      func(b bool) bool { return !b },
-		"len": func(v interface{}) int {
-			switch val := v.(type) {
-			case nil:
-				return 0
-			case []interface{}:
-				return len(val)
-			default:
-				return 0
-			}
-		},
 	}
 	return h
 }
@@ -140,35 +129,7 @@ func (h *Handler) Router() http.Handler {
 
 // ─── Template helpers ──────────────────────────────────────────────────────
 
-func (h *Handler) getTemplate(name string) (*template.Template, error) {
-	if !h.cfg.DevMode {
-		h.tmplMu.RLock()
-		if t, ok := h.tmplCache[name]; ok {
-			h.tmplMu.RUnlock()
-			return t, nil
-		}
-		h.tmplMu.RUnlock()
-	}
-
-	files := []string{
-		filepath.Join("web", "templates", "layout.html"),
-		filepath.Join("web", "templates", name+".html"),
-	}
-	t, err := template.New("").Funcs(h.funcMap).ParseFiles(files...)
-	if err != nil {
-		return nil, err
-	}
-
-	if !h.cfg.DevMode {
-		h.tmplMu.Lock()
-		h.tmplCache[name] = t
-		h.tmplMu.Unlock()
-	}
-	return t, nil
-}
-
-func (h *Handler) getAdminTemplate(name string) (*template.Template, error) {
-	cacheKey := "admin/" + name
+func (h *Handler) loadTemplate(cacheKey string, files []string) (*template.Template, error) {
 	if !h.cfg.DevMode {
 		h.tmplMu.RLock()
 		if t, ok := h.tmplCache[cacheKey]; ok {
@@ -178,10 +139,6 @@ func (h *Handler) getAdminTemplate(name string) (*template.Template, error) {
 		h.tmplMu.RUnlock()
 	}
 
-	files := []string{
-		filepath.Join("web", "templates", "admin", "layout.html"),
-		filepath.Join("web", "templates", "admin", name+".html"),
-	}
 	t, err := template.New("").Funcs(h.funcMap).ParseFiles(files...)
 	if err != nil {
 		return nil, err
@@ -193,6 +150,20 @@ func (h *Handler) getAdminTemplate(name string) (*template.Template, error) {
 		h.tmplMu.Unlock()
 	}
 	return t, nil
+}
+
+func (h *Handler) getTemplate(name string) (*template.Template, error) {
+	return h.loadTemplate(name, []string{
+		filepath.Join("web", "templates", "layout.html"),
+		filepath.Join("web", "templates", name+".html"),
+	})
+}
+
+func (h *Handler) getAdminTemplate(name string) (*template.Template, error) {
+	return h.loadTemplate("admin/"+name, []string{
+		filepath.Join("web", "templates", "admin", "layout.html"),
+		filepath.Join("web", "templates", "admin", name+".html"),
+	})
 }
 
 func (h *Handler) render(w http.ResponseWriter, status int, page string, data interface{}) {

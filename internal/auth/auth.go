@@ -62,7 +62,7 @@ func Middleware(repos *repository.Repositories) func(http.Handler) http.Handler 
 			}
 
 			session, err := repos.Users.GetSession(r.Context(), cookie.Value)
-			if err != nil || session.ExpiresAt.Before(time.Now()) {
+			if err != nil {
 				ClearSessionCookie(w)
 				http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 				return

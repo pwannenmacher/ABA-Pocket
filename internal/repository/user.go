@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"aba-pocket/internal/models"
@@ -63,17 +64,11 @@ func (r *UserRepository) List(ctx context.Context) ([]*models.User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list users: %w", err)
 	}
-	defer rows.Close()
-
-	var users []*models.User
-	for rows.Next() {
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (*models.User, error) {
 		u := &models.User{}
-		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.IsActive, &u.CreatedAt, &u.UpdatedAt); err != nil {
-			return nil, err
-		}
-		users = append(users, u)
-	}
-	return users, rows.Err()
+		err := row.Scan(&u.ID, &u.Username, &u.Email, &u.IsActive, &u.CreatedAt, &u.UpdatedAt)
+		return u, err
+	})
 }
 
 func (r *UserRepository) Delete(ctx context.Context, id int64) error {

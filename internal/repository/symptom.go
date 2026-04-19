@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"fmt"
-	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"aba-pocket/internal/models"
@@ -25,17 +25,11 @@ func (r *SymptomRepository) List(ctx context.Context) ([]*models.Symptom, error)
 	if err != nil {
 		return nil, fmt.Errorf("list symptoms: %w", err)
 	}
-	defer rows.Close()
-
-	var symptoms []*models.Symptom
-	for rows.Next() {
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (*models.Symptom, error) {
 		s := &models.Symptom{}
-		if err := rows.Scan(&s.ID, &s.Title, &s.Description, &s.Source, &s.CreatedAt, &s.UpdatedAt); err != nil {
-			return nil, err
-		}
-		symptoms = append(symptoms, s)
-	}
-	return symptoms, rows.Err()
+		err := row.Scan(&s.ID, &s.Title, &s.Description, &s.Source, &s.CreatedAt, &s.UpdatedAt)
+		return s, err
+	})
 }
 
 func (r *SymptomRepository) GetByID(ctx context.Context, id int64) (*models.Symptom, error) {
@@ -66,19 +60,13 @@ func (r *SymptomRepository) loadTables(ctx context.Context, s *models.Symptom) e
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		t := models.SymptomTable{SymptomID: s.ID}
-		if err := rows.Scan(&t.ID, &t.Title, &t.SortOrder); err != nil {
-			return err
-		}
-		s.Tables = append(s.Tables, t)
-	}
-	if err := rows.Err(); err != nil {
+	tbl := models.SymptomTable{SymptomID: s.ID}
+	if _, err = pgx.ForEachRow(rows, []any{&tbl.ID, &tbl.Title, &tbl.SortOrder}, func() error {
+		s.Tables = append(s.Tables, tbl)
+		return nil
+	}); err != nil {
 		return err
 	}
-
 	for i := range s.Tables {
 		if err := r.loadTableRows(ctx, &s.Tables[i]); err != nil {
 			return err
@@ -96,16 +84,12 @@ func (r *SymptomRepository) loadTableRows(ctx context.Context, t *models.Symptom
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		row := models.SymptomTableRow{SymptomTableID: t.ID}
-		if err := rows.Scan(&row.ID, &row.Medication, &row.RightCol, &row.SortOrder); err != nil {
-			return err
-		}
+	row := models.SymptomTableRow{SymptomTableID: t.ID}
+	_, err = pgx.ForEachRow(rows, []any{&row.ID, &row.Medication, &row.RightCol, &row.SortOrder}, func() error {
 		t.Rows = append(t.Rows, row)
-	}
-	return rows.Err()
+		return nil
+	})
+	return err
 }
 
 func (r *SymptomRepository) loadMedications(ctx context.Context, s *models.Symptom) error {
@@ -118,16 +102,13 @@ func (r *SymptomRepository) loadMedications(ctx context.Context, s *models.Sympt
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		m := &models.Medication{}
-		if err := rows.Scan(&m.ID, &m.Name, &m.Source, &m.UpdatedAt); err != nil {
-			return err
-		}
-		s.Medications = append(s.Medications, m)
-	}
-	return rows.Err()
+	var m models.Medication
+	_, err = pgx.ForEachRow(rows, []any{&m.ID, &m.Name, &m.Source, &m.UpdatedAt}, func() error {
+		med := m
+		s.Medications = append(s.Medications, &med)
+		return nil
+	})
+	return err
 }
 
 func (r *SymptomRepository) Create(ctx context.Context, s *models.Symptom) (int64, error) {
@@ -146,9 +127,9 @@ func (r *SymptomRepository) Create(ctx context.Context, s *models.Symptom) (int6
 
 func (r *SymptomRepository) Update(ctx context.Context, s *models.Symptom) error {
 	_, err := r.pool.Exec(ctx, `
-		UPDATE symptoms SET title=$1, description=$2, source=$3, updated_at=$4
-		WHERE id=$5`,
-		s.Title, s.Description, s.Source, time.Now(), s.ID,
+		UPDATE symptoms SET title=$1, description=$2, source=$3, updated_at=NOW()
+		WHERE id=$4`,
+		s.Title, s.Description, s.Source, s.ID,
 	)
 	return err
 }
@@ -164,7 +145,7 @@ func (r *SymptomRepository) ReplaceTablesAndRows(ctx context.Context, symptomID 
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // no-op after Commit
 
 	// Alle bestehenden Tabellen löschen (CASCADE löscht auch Zeilen)
 	if _, err := tx.Exec(ctx, `DELETE FROM symptom_tables WHERE symptom_id = $1`, symptomID); err != nil {
@@ -202,7 +183,7 @@ func (r *SymptomRepository) SetMedications(ctx context.Context, symptomID int64,
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }() // no-op after Commit
 
 	if _, err := tx.Exec(ctx, `DELETE FROM symptom_medications WHERE symptom_id = $1`, symptomID); err != nil {
 		return err
@@ -231,17 +212,11 @@ func (r *SymptomRepository) Search(ctx context.Context, query string) ([]*models
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	var results []*models.Symptom
-	for rows.Next() {
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (*models.Symptom, error) {
 		s := &models.Symptom{}
-		if err := rows.Scan(&s.ID, &s.Title, &s.Description, &s.Source, &s.UpdatedAt); err != nil {
-			return nil, err
-		}
-		results = append(results, s)
-	}
-	return results, rows.Err()
+		err := row.Scan(&s.ID, &s.Title, &s.Description, &s.Source, &s.UpdatedAt)
+		return s, err
+	})
 }
 
 func (r *SymptomRepository) Count(ctx context.Context) (int, error) {
@@ -256,15 +231,11 @@ func (r *SymptomRepository) GetLinkedMedicationIDs(ctx context.Context, symptomI
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
 	ids := make(map[int64]bool)
-	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
+	var id int64
+	_, err = pgx.ForEachRow(rows, []any{&id}, func() error {
 		ids[id] = true
-	}
-	return ids, rows.Err()
+		return nil
+	})
+	return ids, err
 }
