@@ -67,7 +67,6 @@ type Medication struct {
 	Symptoms    []*Symptom
 }
 
-// SearchResult holds a unified search result
 type SearchResult struct {
 	Type  string // "symptom" or "medication"
 	ID    int64

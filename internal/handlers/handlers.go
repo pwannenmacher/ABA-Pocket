@@ -21,7 +21,6 @@ import (
 	"aba-pocket/internal/repository"
 )
 
-// Handler holds all dependencies for HTTP handlers.
 type Handler struct {
 	cfg   *config.Config
 	repos *repository.Repositories
@@ -66,7 +65,6 @@ func renderMarkdown(s string) template.HTML {
 	return template.HTML(markdown.Render(doc, renderer))
 }
 
-// Router builds and returns the chi router.
 func (h *Handler) Router() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)

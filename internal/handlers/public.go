@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -128,6 +129,21 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isHtmx {
+		// Navbar-Dropdown vs. Suchseiten-Ergebnisse unterscheiden
+		target := r.Header.Get("HX-Target")
+		if target == "search-results-dropdown" {
+			t, err := h.loadTemplate("search_results_dropdown", []string{
+				filepath.Join("web", "templates", "search_results.html"),
+			})
+			if err != nil {
+				http.Error(w, "Fehler", http.StatusInternalServerError)
+				return
+			}
+			if err := t.ExecuteTemplate(w, "search_results", data); err != nil {
+				log.Printf("search_results dropdown template error: %v", err)
+			}
+			return
+		}
 		t, err := h.getTemplate("search")
 		if err != nil {
 			http.Error(w, "Fehler", http.StatusInternalServerError)

@@ -19,7 +19,6 @@ const (
 
 type contextKey string
 
-// GenerateSessionID creates a cryptographically secure random session token.
 func GenerateSessionID() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -28,7 +27,6 @@ func GenerateSessionID() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-// SetSessionCookie writes the session cookie to the response.
 func SetSessionCookie(w http.ResponseWriter, sessionID string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     SessionCookieName,
@@ -40,7 +38,6 @@ func SetSessionCookie(w http.ResponseWriter, sessionID string) {
 	})
 }
 
-// ClearSessionCookie removes the session cookie.
 func ClearSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     SessionCookieName,
@@ -81,7 +78,6 @@ func Middleware(repos *repository.Repositories) func(http.Handler) http.Handler 
 	}
 }
 
-// UserFromContext extracts the authenticated user from the request context.
 func UserFromContext(ctx context.Context) *models.User {
 	u, _ := ctx.Value(contextKeyUser).(*models.User)
 	return u
