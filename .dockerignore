@@ -1,0 +1,54 @@
+# Build-Artefakte
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Entwicklungsverzeichnisse
+.git
+.gitignore
+README.md
+.env
+.env.*
+
+# IDE-Dateien
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Log-Dateien
+*.log
+
+# Test-Verzeichnisse
+input/
+output/
+test/
+
+# Docker-Dateien
+Dockerfile*
+docker-compose*.yaml
+.dockerignore
+
+# OS-spezifische Dateien
+.DS_Store
+Thumbs.db
+
+# Backup-Dateien
+*.bak
+*.backup
+
+# Sonstige
+demo/
+test-scripts/
+tmp/
+dist/
+build/
+node_modules/
+coverage/
+bin/
+docker-examples
