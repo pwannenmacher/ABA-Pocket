@@ -159,3 +159,41 @@ func (r *MedicationRepository) Count(ctx context.Context) (int, error) {
 	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM medications`).Scan(&count)
 	return count, err
 }
+
+func (r *MedicationRepository) SetSymptoms(ctx context.Context, medicationID int64, symptomIDs []int64) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	if _, err := tx.Exec(ctx, `DELETE FROM symptom_medications WHERE medication_id = $1`, medicationID); err != nil {
+		return err
+	}
+
+	for _, symID := range symptomIDs {
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO symptom_medications (symptom_id, medication_id) VALUES ($1, $2)
+			ON CONFLICT DO NOTHING`,
+			symID, medicationID,
+		); err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
+}
+
+func (r *MedicationRepository) GetLinkedSymptomIDs(ctx context.Context, medicationID int64) (map[int64]bool, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT symptom_id FROM symptom_medications WHERE medication_id = $1`, medicationID)
+	if err != nil {
+		return nil, err
+	}
+	ids := make(map[int64]bool)
+	var id int64
+	_, err = pgx.ForEachRow(rows, []any{&id}, func() error {
+		ids[id] = true
+		return nil
+	})
+	return ids, err
+}

@@ -283,12 +283,18 @@ func (h *Handler) AdminListMedications(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) AdminNewMedication(w http.ResponseWriter, r *http.Request) {
+	symptoms, err := h.repos.Symptoms.List(r.Context())
+	if err != nil {
+		log.Printf("load symptoms for medication form: %v", err)
+	}
 	h.renderAdmin(w, r, http.StatusOK, "medication_form", PageData{
 		Title: "Neues Medikament",
 		User:  auth.UserFromContext(r.Context()),
 		Data: map[string]any{
-			"Medication": &models.Medication{},
-			"IsEdit":     false,
+			"Medication":     &models.Medication{},
+			"AllSymptoms":    symptoms,
+			"LinkedSymptoms": map[int64]bool{},
+			"IsEdit":         false,
 		},
 	})
 }
@@ -306,13 +312,19 @@ func (h *Handler) AdminCreateMedication(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if m.Name == "" {
+		symptoms, err := h.repos.Symptoms.List(r.Context())
+		if err != nil {
+			log.Printf("load symptoms for medication form: %v", err)
+		}
 		h.renderAdmin(w, r, http.StatusUnprocessableEntity, "medication_form", PageData{
 			Title: "Neues Medikament",
 			User:  auth.UserFromContext(r.Context()),
 			Data: map[string]any{
-				"Medication": m,
-				"IsEdit":     false,
-				"Error":      "Bitte geben Sie einen Namen an.",
+				"Medication":     m,
+				"AllSymptoms":    symptoms,
+				"LinkedSymptoms": map[int64]bool{},
+				"IsEdit":         false,
+				"Error":          "Bitte geben Sie einen Namen an.",
 			},
 		})
 		return
@@ -327,6 +339,12 @@ func (h *Handler) AdminCreateMedication(w http.ResponseWriter, r *http.Request) 
 	entries := parseEntries(r)
 	if err := h.repos.Medications.ReplaceEntries(r.Context(), id, entries); err != nil {
 		http.Error(w, "Fehler beim Speichern der Einträge", http.StatusInternalServerError)
+		return
+	}
+
+	symIDs := parseSymptomIDs(r)
+	if err := h.repos.Medications.SetSymptoms(r.Context(), id, symIDs); err != nil {
+		http.Error(w, "Fehler beim Speichern der Leitsymptome", http.StatusInternalServerError)
 		return
 	}
 
@@ -347,12 +365,24 @@ func (h *Handler) AdminEditMedication(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	symptoms, err := h.repos.Symptoms.List(r.Context())
+	if err != nil {
+		log.Printf("load symptoms for medication form: %v", err)
+	}
+	linkedIDs, err := h.repos.Medications.GetLinkedSymptomIDs(r.Context(), id)
+	if err != nil {
+		log.Printf("load linked symptom IDs: %v", err)
+		linkedIDs = map[int64]bool{}
+	}
+
 	h.renderAdmin(w, r, http.StatusOK, "medication_form", PageData{
 		Title: "Medikament bearbeiten",
 		User:  auth.UserFromContext(r.Context()),
 		Data: map[string]any{
-			"Medication": medication,
-			"IsEdit":     true,
+			"Medication":     medication,
+			"AllSymptoms":    symptoms,
+			"LinkedSymptoms": linkedIDs,
+			"IsEdit":         true,
 		},
 	})
 }
@@ -383,6 +413,12 @@ func (h *Handler) AdminUpdateMedication(w http.ResponseWriter, r *http.Request) 
 	entries := parseEntries(r)
 	if err := h.repos.Medications.ReplaceEntries(r.Context(), id, entries); err != nil {
 		http.Error(w, "Fehler beim Speichern der Einträge", http.StatusInternalServerError)
+		return
+	}
+
+	symIDs := parseSymptomIDs(r)
+	if err := h.repos.Medications.SetSymptoms(r.Context(), id, symIDs); err != nil {
+		http.Error(w, "Fehler beim Speichern der Leitsymptome", http.StatusInternalServerError)
 		return
 	}
 
@@ -480,7 +516,6 @@ func (h *Handler) AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // parseID parses the "id" URL parameter as int64.
-// parseID parses the "id" URL parameter as int64.
 func parseID(r *http.Request) (int64, error) {
 	return strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 }
@@ -563,6 +598,18 @@ func parseEntries(r *http.Request) []models.CardEntry {
 
 func parseMedicationIDs(r *http.Request) []int64 {
 	raw := r.Form["medication_ids[]"]
+	ids := make([]int64, 0, len(raw))
+	for _, s := range raw {
+		id, err := strconv.ParseInt(s, 10, 64)
+		if err == nil {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
+func parseSymptomIDs(r *http.Request) []int64 {
+	raw := r.Form["symptom_ids[]"]
 	ids := make([]int64, 0, len(raw))
 	for _, s := range raw {
 		id, err := strconv.ParseInt(s, 10, 64)
