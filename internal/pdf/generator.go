@@ -40,8 +40,6 @@ type CardData struct {
 	UpdatedAt time.Time
 }
 
-// ── Öffentliche Funktionen ─────────────────────────────────────────────────
-
 // GenerateAllCards erzeugt ein A4-Querformat-PDF mit 8 A7-Hochformat-Karten pro Seite.
 func GenerateAllCards(cards []CardData) ([]byte, error) {
 	pdf := newPDF()
@@ -71,8 +69,6 @@ func GenerateSingleCard(card CardData) ([]byte, error) {
 	renderCard(pdf, card, 0, 0, sW, sH)
 	return output(pdf)
 }
-
-// ── Interne Hilfsfunktionen ────────────────────────────────────────────────
 
 func newPDF() *fpdf.Fpdf {
 	pdf := fpdf.New("L", "mm", "A4", "") // A4 Querformat für Sammel-PDF
@@ -139,8 +135,6 @@ func calcRowH(pdf *fpdf.Fpdf, leftText, rightText string, leftW, rightW float64,
 	}
 	return float64(n)*lineH + 2*cellPadY
 }
-
-// ── Haupt-Render-Funktion ──────────────────────────────────────────────────
 
 // renderCard zeichnet eine einzelne Karte in den Bereich (x,y) mit Breite cw und Höhe ch.
 func renderCard(pdf *fpdf.Fpdf, card CardData, x, y, cw, ch float64) {
@@ -229,7 +223,6 @@ func renderSymptomTables(pdf *fpdf.Fpdf, tr func(string) string,
 			break
 		}
 
-		// ── Abstand zwischen Tabellen ──────────────────────────────
 		if ti > 0 {
 			gapH := 2.5
 			if curY+gapH > bottomY {
@@ -242,7 +235,6 @@ func renderSymptomTables(pdf *fpdf.Fpdf, tr func(string) string,
 			curY += gapH
 		}
 
-		// ── Optionale Tabellenüberschrift ──────────────────────────
 		if table.Title != "" {
 			titleRowH := 3.8
 			if curY+titleRowH > bottomY {
@@ -261,7 +253,6 @@ func renderSymptomTables(pdf *fpdf.Fpdf, tr func(string) string,
 			curY += titleRowH
 		}
 
-		// ── Zeilen der Gruppe ──────────────────────────────────────
 		for i, row := range table.Rows {
 			leftText := tr(stripMarkdown(row.Medication))
 			rightText := tr(stripMarkdown(row.RightCol))

@@ -72,8 +72,6 @@ func cleanDB(t *testing.T) {
 	}
 }
 
-// ── User Repository ────────────────────────────────────────────────────────
-
 func TestUserRepository_CreateAndGet(t *testing.T) {
 	cleanDB(t)
 	ctx := context.Background()
@@ -229,8 +227,6 @@ func TestUserRepository_DeleteExpiredSessions(t *testing.T) {
 		t.Error("valid session should still exist")
 	}
 }
-
-// ── Symptom Repository ─────────────────────────────────────────────────────
 
 func TestSymptomRepository_CRUD(t *testing.T) {
 	cleanDB(t)
@@ -411,8 +407,6 @@ func TestSymptomRepository_SetMedications(t *testing.T) {
 	}
 }
 
-// ── Medication Repository ──────────────────────────────────────────────────
-
 func TestMedicationRepository_CRUD(t *testing.T) {
 	cleanDB(t)
 	ctx := context.Background()
@@ -542,8 +536,6 @@ func TestMedicationRepository_LinkedSymptoms(t *testing.T) {
 	}
 }
 
-// ── Cascade Delete ─────────────────────────────────────────────────────────
-
 func TestCascadeDelete_SymptomDeletesCascade(t *testing.T) {
 	cleanDB(t)
 	ctx := context.Background()
@@ -588,8 +580,6 @@ func TestCascadeDelete_UserDeletesSessions(t *testing.T) {
 		t.Errorf("expected 0 sessions after user delete, got %d", count)
 	}
 }
-
-// ── Sort order preserved ───────────────────────────────────────────────────
 
 func TestSortOrderPreserved(t *testing.T) {
 	cleanDB(t)

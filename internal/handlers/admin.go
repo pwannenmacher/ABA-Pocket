@@ -14,8 +14,6 @@ import (
 	"aba-pocket/internal/models"
 )
 
-// ─── Auth ──────────────────────────────────────────────────────────────────
-
 func (h *Handler) AdminLogin(w http.ResponseWriter, r *http.Request) {
 	if auth.UserFromContext(r.Context()) != nil {
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
@@ -88,8 +86,6 @@ func (h *Handler) AdminLogout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// ─── Dashboard ─────────────────────────────────────────────────────────────
-
 func (h *Handler) AdminDashboard(w http.ResponseWriter, r *http.Request) {
 	symCount, err := h.repos.Symptoms.Count(r.Context())
 	if err != nil {
@@ -115,8 +111,6 @@ func (h *Handler) AdminDashboard(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
-
-// ─── Symptoms ──────────────────────────────────────────────────────────────
 
 func (h *Handler) AdminListSymptoms(w http.ResponseWriter, r *http.Request) {
 	symptoms, err := h.repos.Symptoms.List(r.Context())
@@ -274,8 +268,6 @@ func (h *Handler) AdminDeleteSymptom(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/symptoms", http.StatusSeeOther)
 }
 
-// ─── Medications ───────────────────────────────────────────────────────────
-
 func (h *Handler) AdminListMedications(w http.ResponseWriter, r *http.Request) {
 	medications, err := h.repos.Medications.List(r.Context())
 	if err != nil {
@@ -411,8 +403,6 @@ func (h *Handler) AdminDeleteMedication(w http.ResponseWriter, r *http.Request) 
 	h.setFlash(w, "Medikament wurde gelöscht.")
 	http.Redirect(w, r, "/admin/medications", http.StatusSeeOther)
 }
-
-// ─── Users ─────────────────────────────────────────────────────────────────
 
 func (h *Handler) AdminListUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := h.repos.Users.List(r.Context())

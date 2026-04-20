@@ -1,6 +1,3 @@
-/* ABA Pocket – Frontend JavaScript */
-
-// ── HTMX CSRF-Token für state-changing Requests ────────────────
 document.addEventListener('htmx:configRequest', function(evt) {
   if (['post','put','delete','patch'].includes(evt.detail.verb)) {
     const meta = document.querySelector('meta[name="csrf-token"]');
@@ -10,7 +7,6 @@ document.addEventListener('htmx:configRequest', function(evt) {
   }
 });
 
-// ── Mobile nav toggle ──────────────────────────────────────────
 const navToggle = document.getElementById('navToggle');
 const navMenu   = document.getElementById('navMenu');
 
@@ -26,7 +22,6 @@ if (navToggle && navMenu) {
   });
 }
 
-// ── Global search dropdown ─────────────────────────────────────
 const globalSearch = document.getElementById('globalSearch');
 const dropdown     = document.getElementById('search-results-dropdown');
 
@@ -46,14 +41,12 @@ if (globalSearch && dropdown) {
   });
 }
 
-// ── Flash message auto-dismiss ─────────────────────────────────
 const flash = document.getElementById('flashMsg');
 if (flash) {
   setTimeout(() => { flash.style.transition = 'opacity 0.5s'; }, 3000);
   setTimeout(() => { flash.style.opacity = '0'; setTimeout(() => flash.remove(), 500); }, 3500);
 }
 
-// ── Medication card: entry row removal ────────────────────────
 function removeRow(btn) {
   btn.closest('tr')?.remove();
 }
@@ -135,7 +128,6 @@ function removeTableRow(btn) {
   btn.closest('tr')?.remove();
 }
 
-// ── Drag & Drop: Zeilen in Symptom-Tabellen sortieren ──────────
 
 let _dragRow = null;
 
@@ -203,7 +195,6 @@ document.querySelectorAll('#tablesContainer .rows-body').forEach(initRowDragDrop
 // Drag & Drop für Medikamenten-Einträge
 initRowDragDrop(document.getElementById('entriesBody'));
 
-// ── Renaming vor dem Submit ────────────────────────────────────
 // Benennt alle Felder des Symptom-Formulars sequenziell um, damit
 // der Server klar strukturierte Daten erhält (table_N_title, row_N_M_med, …).
 
