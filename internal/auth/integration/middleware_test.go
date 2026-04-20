@@ -82,7 +82,7 @@ func TestAuthMiddleware_NoCookie(t *testing.T) {
 	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("should not be called without cookie")
 	})
-	handler := auth.Middleware(repos())(inner)
+	handler := auth.Middleware(repos(), false)(inner)
 
 	r := httptest.NewRequest(http.MethodGet, "/admin", nil)
 	w := httptest.NewRecorder()
@@ -102,7 +102,7 @@ func TestAuthMiddleware_InvalidSession(t *testing.T) {
 	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("should not be called")
 	})
-	handler := auth.Middleware(repos())(inner)
+	handler := auth.Middleware(repos(), false)(inner)
 
 	r := httptest.NewRequest(http.MethodGet, "/admin", nil)
 	r.AddCookie(&http.Cookie{Name: auth.SessionCookieName, Value: "nonexistent"})
@@ -132,7 +132,7 @@ func TestAuthMiddleware_ValidSession(t *testing.T) {
 			t.Errorf("username = %q", user.Username)
 		}
 	})
-	handler := auth.Middleware(rp)(inner)
+	handler := auth.Middleware(rp, false)(inner)
 
 	r := httptest.NewRequest(http.MethodGet, "/admin", nil)
 	r.AddCookie(&http.Cookie{Name: auth.SessionCookieName, Value: "valid-sess"})
@@ -155,7 +155,7 @@ func TestAuthMiddleware_ExpiredSession(t *testing.T) {
 	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("should not be called")
 	})
-	handler := auth.Middleware(rp)(inner)
+	handler := auth.Middleware(rp, false)(inner)
 
 	r := httptest.NewRequest(http.MethodGet, "/admin", nil)
 	r.AddCookie(&http.Cookie{Name: auth.SessionCookieName, Value: "expired-sess"})

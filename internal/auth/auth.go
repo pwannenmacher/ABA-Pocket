@@ -27,31 +27,31 @@ func GenerateSessionID() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func SetSessionCookie(w http.ResponseWriter, sessionID string) {
+func SetSessionCookie(w http.ResponseWriter, sessionID string, secure bool) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     SessionCookieName,
 		Value:    sessionID,
 		Path:     "/",
 		MaxAge:   int(SessionDuration.Seconds()),
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
 	})
 }
 
-func ClearSessionCookie(w http.ResponseWriter) {
+func ClearSessionCookie(w http.ResponseWriter, secure bool) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     SessionCookieName,
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   secure,
 	})
 }
 
 // Middleware validates the session cookie and injects the user into the request context.
-func Middleware(repos *repository.Repositories) func(http.Handler) http.Handler {
+func Middleware(repos *repository.Repositories, secure bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cookie, err := r.Cookie(SessionCookieName)
@@ -62,14 +62,14 @@ func Middleware(repos *repository.Repositories) func(http.Handler) http.Handler 
 
 			session, err := repos.Users.GetSession(r.Context(), cookie.Value)
 			if err != nil {
-				ClearSessionCookie(w)
+				ClearSessionCookie(w, secure)
 				http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 				return
 			}
 
 			user, err := repos.Users.GetByID(r.Context(), session.UserID)
 			if err != nil || !user.IsActive {
-				ClearSessionCookie(w)
+				ClearSessionCookie(w, secure)
 				http.Redirect(w, r, "/admin/login", http.StatusSeeOther)
 				return
 			}

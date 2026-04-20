@@ -96,7 +96,7 @@ func (h *Handler) Router() http.Handler {
 	r.Post("/admin/login", h.AdminLoginPost)
 
 	r.Route("/admin", func(r chi.Router) {
-		r.Use(auth.Middleware(h.repos))
+		r.Use(auth.Middleware(h.repos, !h.cfg.DevMode))
 		r.Use(h.csrfProtect)
 
 		r.Post("/logout", h.AdminLogout)
@@ -123,9 +123,6 @@ func (h *Handler) Router() http.Handler {
 		r.Get("/users", h.AdminListUsers)
 		r.Post("/users/new", h.AdminCreateUser)
 		r.Post("/users/{id}/delete", h.AdminDeleteUser)
-
-		// HTMX fragment: new entry row
-		r.Get("/entries/row", h.AdminEntryRow)
 	})
 
 	return r
@@ -201,19 +198,19 @@ func (h *Handler) renderAdmin(w http.ResponseWriter, r *http.Request, status int
 	}
 }
 
-func setFlash(w http.ResponseWriter, msg string) {
+func (h *Handler) setFlash(w http.ResponseWriter, msg string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "flash",
 		Value:    url.QueryEscape(msg),
 		Path:     "/admin",
 		MaxAge:   60,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   !h.cfg.DevMode,
 		SameSite: http.SameSiteLaxMode,
 	})
 }
 
-func getFlash(w http.ResponseWriter, r *http.Request) string {
+func (h *Handler) getFlash(w http.ResponseWriter, r *http.Request) string {
 	cookie, err := r.Cookie("flash")
 	if err != nil {
 		return ""
@@ -224,7 +221,7 @@ func getFlash(w http.ResponseWriter, r *http.Request) string {
 		Path:     "/admin",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   !h.cfg.DevMode,
 	})
 	msg, _ := url.QueryUnescape(cookie.Value)
 	return msg
