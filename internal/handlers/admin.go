@@ -479,24 +479,7 @@ func (h *Handler) AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
 }
 
-// ─── HTMX fragments ────────────────────────────────────────────────────────
-
-func (h *Handler) AdminEntryRow(w http.ResponseWriter, _ *http.Request) {
-	const html = `
-<tr class="entry-row table-row">
-  <td class="drag-handle" title="Zeile verschieben">⠿</td>
-  <td><textarea name="entry_left[]" class="entry-input" placeholder="Schlüssel (Markdown möglich)" rows="2"></textarea></td>
-  <td><textarea name="entry_right[]" class="entry-input" placeholder="Wert (Markdown möglich)" rows="2"></textarea></td>
-  <td class="entry-action"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button></td>
-</tr>`
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if _, err := fmt.Fprint(w, html); err != nil {
-		log.Printf("write entry row: %v", err)
-	}
-}
-
-// ─── Helpers ───────────────────────────────────────────────────────────────
-
+// parseID parses the "id" URL parameter as int64.
 // parseID parses the "id" URL parameter as int64.
 func parseID(r *http.Request) (int64, error) {
 	return strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)

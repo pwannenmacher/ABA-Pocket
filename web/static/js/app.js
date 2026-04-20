@@ -51,9 +51,19 @@ function removeRow(btn) {
   btn.closest('tr')?.remove();
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Symptom-Formular: dynamische Tabellen-Verwaltung
-// ═══════════════════════════════════════════════════════════════
+function addEntryRow() {
+  const tbody = document.getElementById('entriesBody');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.className = 'entry-row table-row';
+  tr.innerHTML = `
+    <td class="drag-handle" title="Zeile verschieben">⠿</td>
+    <td><textarea name="entry_left[]" class="entry-input" placeholder="Schlüssel (Markdown möglich)" rows="2"></textarea></td>
+    <td><textarea name="entry_right[]" class="entry-input" placeholder="Wert (Markdown möglich)" rows="2"></textarea></td>
+    <td class="entry-action"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button></td>`;
+  tbody.appendChild(tr);
+  tr.querySelector('.entry-input')?.focus();
+}
 
 /**
  * Fügt eine neue, leere Tabellengruppe zum Container hinzu.
@@ -197,7 +207,6 @@ initRowDragDrop(document.getElementById('entriesBody'));
 
 // Benennt alle Felder des Symptom-Formulars sequenziell um, damit
 // der Server klar strukturierte Daten erhält (table_N_title, row_N_M_med, …).
-
 document.getElementById('symptomForm')?.addEventListener('submit', function () {
   renumberSymptomTables();
 });
