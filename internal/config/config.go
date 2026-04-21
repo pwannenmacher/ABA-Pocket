@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -15,12 +16,13 @@ func init() {
 }
 
 type Config struct {
-	ListenAddr    string
-	DatabaseURL   string
-	SessionSecret string
-	AdminUsername string
-	AdminPassword string
-	DevMode       bool
+	ListenAddr     string
+	DatabaseURL    string
+	SessionSecret  string
+	AdminUsername  string
+	AdminPassword  string
+	DevMode        bool
+	TrustedProxies []string // CIDR or IP strings
 
 	// Impressum
 	ImprintName   string
@@ -50,6 +52,16 @@ func Load() *Config {
 	}
 	if len(cfg.SessionSecret) < 32 {
 		log.Fatal("SESSION_SECRET must be at least 32 characters")
+	}
+
+	// Parse trusted proxies (comma-separated CIDRs/IPs)
+	if tp := getEnv("TRUSTED_PROXIES", ""); tp != "" {
+		for _, s := range strings.Split(tp, ",") {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				cfg.TrustedProxies = append(cfg.TrustedProxies, s)
+			}
+		}
 	}
 
 	return cfg

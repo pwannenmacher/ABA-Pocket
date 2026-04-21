@@ -68,6 +68,7 @@ func renderMarkdown(s string) template.HTML {
 
 func (h *Handler) Router() http.Handler {
 	r := chi.NewRouter()
+	r.Use(auth.RealIPMiddleware(h.cfg.TrustedProxies))
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Compress(5))
