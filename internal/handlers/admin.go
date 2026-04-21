@@ -14,6 +14,12 @@ import (
 	"aba-pocket/internal/models"
 )
 
+const (
+	adminLoginErrorPath              = "/admin/login?error=1"
+	logLoadMedicationsForSymptomForm = "load medications for symptom form: %v"
+	errMsgFehlerBeimSpeichern        = "Fehler beim Speichern"
+)
+
 func (h *Handler) AdminLogin(w http.ResponseWriter, r *http.Request) {
 	if auth.UserFromContext(r.Context()) != nil {
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
@@ -34,7 +40,7 @@ func (h *Handler) AdminLogin(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) AdminLoginPost(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/admin/login?error=1", http.StatusSeeOther)
+		http.Redirect(w, r, adminLoginErrorPath, http.StatusSeeOther)
 		return
 	}
 
@@ -52,11 +58,11 @@ func (h *Handler) AdminLoginPost(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.repos.Users.GetByUsername(r.Context(), username)
 	if err != nil || !user.IsActive {
-		http.Redirect(w, r, "/admin/login?error=1", http.StatusSeeOther)
+		http.Redirect(w, r, adminLoginErrorPath, http.StatusSeeOther)
 		return
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		http.Redirect(w, r, "/admin/login?error=1", http.StatusSeeOther)
+		http.Redirect(w, r, adminLoginErrorPath, http.StatusSeeOther)
 		return
 	}
 
@@ -64,11 +70,11 @@ func (h *Handler) AdminLoginPost(w http.ResponseWriter, r *http.Request) {
 
 	sessionID, err := auth.GenerateSessionID()
 	if err != nil {
-		http.Redirect(w, r, "/admin/login?error=1", http.StatusSeeOther)
+		http.Redirect(w, r, adminLoginErrorPath, http.StatusSeeOther)
 		return
 	}
 	if err := h.repos.Users.CreateSession(r.Context(), sessionID, user.ID, auth.SessionDuration); err != nil {
-		http.Redirect(w, r, "/admin/login?error=1", http.StatusSeeOther)
+		http.Redirect(w, r, adminLoginErrorPath, http.StatusSeeOther)
 		return
 	}
 
@@ -129,7 +135,7 @@ func (h *Handler) AdminListSymptoms(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AdminNewSymptom(w http.ResponseWriter, r *http.Request) {
 	medications, err := h.repos.Medications.List(r.Context())
 	if err != nil {
-		log.Printf("load medications for symptom form: %v", err)
+		log.Printf(logLoadMedicationsForSymptomForm, err)
 	}
 	h.renderAdmin(w, r, http.StatusOK, "symptom_form", PageData{
 		Title: "Neues Leitsymptom",
@@ -158,7 +164,7 @@ func (h *Handler) AdminCreateSymptom(w http.ResponseWriter, r *http.Request) {
 	if s.Title == "" {
 		medications, err := h.repos.Medications.List(r.Context())
 		if err != nil {
-			log.Printf("load medications for symptom form: %v", err)
+			log.Printf(logLoadMedicationsForSymptomForm, err)
 		}
 		h.renderAdmin(w, r, http.StatusUnprocessableEntity, "symptom_form", PageData{
 			Title: "Neues Leitsymptom",
@@ -176,7 +182,7 @@ func (h *Handler) AdminCreateSymptom(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.repos.Symptoms.Create(r.Context(), s)
 	if err != nil {
-		http.Error(w, "Fehler beim Speichern", http.StatusInternalServerError)
+		http.Error(w, errMsgFehlerBeimSpeichern, http.StatusInternalServerError)
 		return
 	}
 
@@ -203,7 +209,7 @@ func (h *Handler) AdminEditSymptom(w http.ResponseWriter, r *http.Request) {
 
 	medications, err := h.repos.Medications.List(r.Context())
 	if err != nil {
-		log.Printf("load medications for symptom form: %v", err)
+		log.Printf(logLoadMedicationsForSymptomForm, err)
 	}
 	linkedIDs, err := h.repos.Symptoms.GetLinkedMedicationIDs(r.Context(), id)
 	if err != nil {
@@ -242,7 +248,7 @@ func (h *Handler) AdminUpdateSymptom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.repos.Symptoms.Update(r.Context(), s); err != nil {
-		http.Error(w, "Fehler beim Speichern", http.StatusInternalServerError)
+		http.Error(w, errMsgFehlerBeimSpeichern, http.StatusInternalServerError)
 		return
 	}
 
@@ -332,7 +338,7 @@ func (h *Handler) AdminCreateMedication(w http.ResponseWriter, r *http.Request) 
 
 	id, err := h.repos.Medications.Create(r.Context(), m)
 	if err != nil {
-		http.Error(w, "Fehler beim Speichern", http.StatusInternalServerError)
+		http.Error(w, errMsgFehlerBeimSpeichern, http.StatusInternalServerError)
 		return
 	}
 
@@ -406,7 +412,7 @@ func (h *Handler) AdminUpdateMedication(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := h.repos.Medications.Update(r.Context(), m); err != nil {
-		http.Error(w, "Fehler beim Speichern", http.StatusInternalServerError)
+		http.Error(w, errMsgFehlerBeimSpeichern, http.StatusInternalServerError)
 		return
 	}
 
