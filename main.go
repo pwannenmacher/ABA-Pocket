@@ -39,6 +39,9 @@ func main() {
 	seedAdmin(cfg, repos)
 
 	h := handlers.New(cfg, repos)
+	if len(cfg.TrustedProxies) > 0 {
+		log.Printf("Trusted proxies: %v", cfg.TrustedProxies)
+	}
 	srv := &http.Server{
 		Addr:         cfg.ListenAddr,
 		Handler:      h.Router(),
