@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -27,6 +28,8 @@ func RealIPMiddleware(trustedProxies []string) func(http.Handler) http.Handler {
 		_, cidr, err := net.ParseCIDR(p)
 		if err == nil {
 			nets = append(nets, cidr)
+		} else {
+			log.Printf("WARNING: invalid trusted proxy CIDR %q: %v", p, err)
 		}
 	}
 

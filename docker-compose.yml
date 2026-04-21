@@ -15,6 +15,7 @@ services:
       - IMPRINT_ZIP=${IMPRINT_ZIP:-}
       - IMPRINT_CITY=${IMPRINT_CITY:-}
       - IMPRINT_EMAIL=${IMPRINT_EMAIL:-}
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES:-}
     depends_on:
       db:
         condition: service_healthy

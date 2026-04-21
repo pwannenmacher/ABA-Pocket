@@ -62,6 +62,7 @@ func Load() *Config {
 				cfg.TrustedProxies = append(cfg.TrustedProxies, s)
 			}
 		}
+		log.Printf("Trusted proxies: %v", cfg.TrustedProxies)
 	}
 
 	return cfg
