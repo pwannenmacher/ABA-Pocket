@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	SessionCookieName = "aba_session"
+	SessionCookieName = "aba-pocket-session"
 	SessionDuration   = 24 * time.Hour
 	contextKeyUser    = contextKey("user")
 
