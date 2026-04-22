@@ -107,10 +107,10 @@ func truncate(s string, n int) string {
 
 // Zeichengrößen und Abstände
 const (
-	fontSize = 6.5 // pt
-	lineH    = 3.2 // mm pro Textzeile (6,5pt × 0,3528 mm/pt × ~1,4 Zeilenabstand)
-	cellPadX = 1.5 // mm horizontaler Innenabstand
-	cellPadY = 0.8 // mm vertikaler Innenabstand (oben)
+	fontSize = 5.5 // pt
+	lineH    = 2.4 // mm pro Textzeile (5,5pt × 0,3528 mm/pt × ~1,2 Zeilenabstand)
+	cellPadX = 1.2 // mm horizontaler Innenabstand
+	cellPadY = 0.6 // mm vertikaler Innenabstand (oben)
 )
 
 // calcRowH berechnet die benötigte Zeilenhöhe mit korrektem Schriftstil pro Spalte.
@@ -172,7 +172,7 @@ func renderCard(pdf *fpdf.Fpdf, card CardData, x, y, cw, ch float64) {
 	tableTopY := y + titleH
 	tableBottomY := y + ch - footerH
 
-	leftColW := cw * 0.50 // 50 / 50 – gleiche Breite für beide Spalten
+	leftColW := cw * 0.38 // linke Spalte schmaler (vorher 0.50)
 	rightColW := cw - leftColW
 
 	if card.CardType == "symptom" {
