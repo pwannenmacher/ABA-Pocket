@@ -91,20 +91,22 @@ func symptomToCard(s *models.Symptom) pdf.CardData {
 		})
 	}
 	return pdf.CardData{
-		Title:     s.Title,
-		CardType:  "symptom",
-		Tables:    tables,
-		Source:    s.Source,
-		UpdatedAt: s.UpdatedAt,
+		Title:       s.Title,
+		Description: s.Description,
+		CardType:    "symptom",
+		Tables:      tables,
+		Source:      s.Source,
+		UpdatedAt:   s.UpdatedAt,
 	}
 }
 
 func medicationToCard(m *models.Medication) pdf.CardData {
 	return pdf.CardData{
-		Title:     m.Name,
-		CardType:  "medication",
-		Entries:   m.Entries,
-		Source:    m.Source,
-		UpdatedAt: m.UpdatedAt,
+		Title:       m.Name,
+		Description: m.Description,
+		CardType:    "medication",
+		Entries:     m.Entries,
+		Source:      m.Source,
+		UpdatedAt:   m.UpdatedAt,
 	}
 }

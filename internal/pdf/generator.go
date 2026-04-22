@@ -22,6 +22,7 @@ const (
 	cols    = 4
 	rows    = 2
 	marginX = 0.5 // (297 - 4×74) / 2
+	font    = "Helvetica"
 )
 
 // SymptomTableData ist die PDF-Darstellung einer Tabellengruppe eines Leitsymptoms.
@@ -32,12 +33,13 @@ type SymptomTableData struct {
 
 // CardData enthält alle Daten für eine einzelne Taschenkarte.
 type CardData struct {
-	Title     string
-	CardType  string             // "symptom" | "medication"
-	Tables    []SymptomTableData // für Leitsymptome
-	Entries   []models.CardEntry // für Medikamente
-	Source    string
-	UpdatedAt time.Time
+	Title       string
+	Description string
+	CardType    string             // "symptom" | "medication"
+	Tables      []SymptomTableData // für Leitsymptome
+	Entries     []models.CardEntry // für Medikamente
+	Source      string
+	UpdatedAt   time.Time
 }
 
 // GenerateAllCards erzeugt ein A4-Querformat-PDF mit 8 A7-Hochformat-Karten pro Seite.
@@ -107,23 +109,27 @@ func truncate(s string, n int) string {
 
 // Zeichengrößen und Abstände
 const (
-	fontSize = 5.5 // pt
-	lineH    = 2.4 // mm pro Textzeile (5,5pt × 0,3528 mm/pt × ~1,2 Zeilenabstand)
-	cellPadX = 1.2 // mm horizontaler Innenabstand
-	cellPadY = 0.6 // mm vertikaler Innenabstand (oben)
+	headerFontSize = 8 // pt
+	labelFontSize  = 5 // pt
+	descFontSize   = 4.5
+	tableFontSize  = 5   // pt
+	footerFontSize = 4   // pt
+	tableLineH     = 2.1 // mm pro Textzeile (5 pt × 0,3528 mm/pt × ~1,2 Zeilenabstand)
+	cellPadX       = 1.2 // mm horizontaler Innenabstand
+	cellPadY       = 0.6 // mm vertikaler Innenabstand (oben)
 )
 
 // calcRowH berechnet die benötigte Zeilenhöhe mit korrektem Schriftstil pro Spalte.
 // rightBold=true für die erste (hervorgehobene) Zeile einer Symptom-Tabelle.
 func calcRowH(pdf *fpdf.Fpdf, leftText, rightText string, leftW, rightW float64, rightBold bool) float64 {
-	pdf.SetFont("Helvetica", "B", fontSize) // linke Spalte: immer fett
+	pdf.SetFont(font, "B", tableFontSize) // linke Spalte: immer fett
 	l := pdf.SplitLines([]byte(leftText), leftW-2*cellPadX)
 
 	rStyle := ""
 	if rightBold {
 		rStyle = "B"
 	}
-	pdf.SetFont("Helvetica", rStyle, fontSize)
+	pdf.SetFont(font, rStyle, tableFontSize)
 	r := pdf.SplitLines([]byte(rightText), rightW-2*cellPadX)
 
 	n := len(l)
@@ -133,7 +139,7 @@ func calcRowH(pdf *fpdf.Fpdf, leftText, rightText string, leftW, rightW float64,
 	if n < 1 {
 		n = 1
 	}
-	return float64(n)*lineH + 2*cellPadY
+	return float64(n)*tableLineH + 2*cellPadY
 }
 
 // renderCard zeichnet eine einzelne Karte in den Bereich (x,y) mit Breite cw und Höhe ch.
@@ -146,7 +152,7 @@ func renderCard(pdf *fpdf.Fpdf, card CardData, x, y, cw, ch float64) {
 	pdf.Rect(x, y, cw, ch, "D")
 
 	// Titelbalken
-	titleH := 9.0
+	titleH := 8.5
 	if card.CardType == "symptom" {
 		pdf.SetFillColor(30, 80, 140)
 	} else {
@@ -155,11 +161,11 @@ func renderCard(pdf *fpdf.Fpdf, card CardData, x, y, cw, ch float64) {
 	pdf.Rect(x, y, cw, titleH, "F")
 
 	pdf.SetTextColor(255, 255, 255)
-	pdf.SetFont("Helvetica", "B", 9)
+	pdf.SetFont(font, "B", headerFontSize)
 	pdf.SetXY(x+2, y+1)
 	pdf.CellFormat(cw-4, titleH-2, tr(truncate(card.Title, 45)), "", 0, "LM", false, 0, "")
 
-	pdf.SetFont("Helvetica", "", 6)
+	pdf.SetFont(font, "", labelFontSize)
 	label := "Leitsymptom"
 	if card.CardType == "medication" {
 		label = "Medikament"
@@ -167,12 +173,22 @@ func renderCard(pdf *fpdf.Fpdf, card CardData, x, y, cw, ch float64) {
 	pdf.SetXY(x+2, y+1)
 	pdf.CellFormat(cw-4, titleH-2, tr(label), "", 0, "RM", false, 0, "")
 
+	// Beschreibung unterhalb des Titels einfügen
+	if card.Description != "" {
+		descY := y + titleH - 3.0 // etwas unterhalb des Titels
+		pdf.SetFont(font, "", descFontSize)
+		pdf.SetTextColor(230, 230, 230)
+		pdf.SetXY(x+2, descY)
+		pdf.CellFormat(cw-4, 3, tr(truncate(card.Description, 120)), "", 0, "LM", false, 0, "")
+		pdf.SetTextColor(255, 255, 255)
+	}
+
 	// Tabellenbereich
-	footerH := 5.0
+	footerH := 3.0
 	tableTopY := y + titleH
 	tableBottomY := y + ch - footerH
 
-	leftColW := cw * 0.38 // linke Spalte schmaler (vorher 0.50)
+	leftColW := cw * 0.30 // linke Spalte schmaler (vorher 0.50)
 	rightColW := cw - leftColW
 
 	if card.CardType == "symptom" {
@@ -190,7 +206,7 @@ func renderCard(pdf *fpdf.Fpdf, card CardData, x, y, cw, ch float64) {
 	pdf.Line(x, footerY, x+cw, footerY)
 
 	pdf.SetTextColor(110, 110, 110)
-	pdf.SetFont("Helvetica", "", 5)
+	pdf.SetFont(font, "", footerFontSize)
 
 	src := ""
 	if card.Source != "" {
@@ -247,7 +263,7 @@ func renderSymptomTables(pdf *fpdf.Fpdf, tr func(string) string,
 			pdf.Line(x, curY, x+tableW, curY)
 
 			pdf.SetTextColor(40, 60, 100)
-			pdf.SetFont("Helvetica", "BI", 6)
+			pdf.SetFont(font, "BI", tableFontSize)
 			pdf.SetXY(x+cellPadX, curY+0.6)
 			pdf.CellFormat(tableW-2*cellPadX, titleRowH-1, tr(truncate(table.Title, 50)), "", 0, "LM", false, 0, "")
 			curY += titleRowH
@@ -282,20 +298,20 @@ func renderSymptomTables(pdf *fpdf.Fpdf, tr func(string) string,
 			} else {
 				pdf.SetTextColor(40, 40, 40)
 			}
-			pdf.SetFont("Helvetica", "B", fontSize)
+			pdf.SetFont(font, "B", tableFontSize)
 			pdf.SetXY(x+cellPadX, curY+cellPadY)
-			pdf.MultiCell(leftColW-2*cellPadX, lineH, leftText, "", "LT", false)
+			pdf.MultiCell(leftColW-2*cellPadX, tableLineH, leftText, "", "LT", false)
 
 			// Rechte Spalte – erste Zeile fett (blau), sonst regular
 			if isFirst {
 				pdf.SetTextColor(20, 50, 110)
-				pdf.SetFont("Helvetica", "B", fontSize)
+				pdf.SetFont(font, "B", tableFontSize)
 			} else {
 				pdf.SetTextColor(40, 40, 40)
-				pdf.SetFont("Helvetica", "", fontSize)
+				pdf.SetFont(font, "", tableFontSize)
 			}
 			pdf.SetXY(x+leftColW+cellPadX, curY+cellPadY)
-			pdf.MultiCell(rightColW-2*cellPadX, lineH, rightText, "", "LT", false)
+			pdf.MultiCell(rightColW-2*cellPadX, tableLineH, rightText, "", "LT", false)
 
 			curY += rh
 		}
@@ -333,13 +349,13 @@ func renderEntries(pdf *fpdf.Fpdf, tr func(string) string,
 		}
 
 		pdf.SetTextColor(40, 40, 40)
-		pdf.SetFont("Helvetica", "B", fontSize)
+		pdf.SetFont(font, "B", tableFontSize)
 		pdf.SetXY(x+cellPadX, curY+cellPadY)
-		pdf.MultiCell(leftColW-2*cellPadX, lineH, leftText, "", "LT", false)
+		pdf.MultiCell(leftColW-2*cellPadX, tableLineH, leftText, "", "LT", false)
 
-		pdf.SetFont("Helvetica", "", fontSize)
+		pdf.SetFont(font, "", tableFontSize)
 		pdf.SetXY(x+leftColW+cellPadX, curY+cellPadY)
-		pdf.MultiCell(rightColW-2*cellPadX, lineH, rightText, "", "LT", false)
+		pdf.MultiCell(rightColW-2*cellPadX, tableLineH, rightText, "", "LT", false)
 
 		curY += rh
 	}
@@ -347,7 +363,7 @@ func renderEntries(pdf *fpdf.Fpdf, tr func(string) string,
 
 func renderEmpty(pdf *fpdf.Fpdf, tr func(string) string, x, y, w float64) {
 	pdf.SetTextColor(160, 160, 160)
-	pdf.SetFont("Helvetica", "I", 7)
+	pdf.SetFont(font, "I", 7)
 	pdf.SetXY(x+2, y+2)
 	pdf.CellFormat(w-4, 6, tr("Keine Einträge"), "", 0, "LT", false, 0, "")
 }
