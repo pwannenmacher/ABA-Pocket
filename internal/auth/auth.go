@@ -15,8 +15,7 @@ const (
 	SessionCookieName = "aba-pocket-session"
 	SessionDuration   = 24 * time.Hour
 	contextKeyUser    = contextKey("user")
-
-	adminLoginPath = "/admin/login"
+	adminLoginPath    = "/admin/login"
 )
 
 type contextKey string

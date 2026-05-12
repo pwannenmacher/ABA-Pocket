@@ -26,21 +26,18 @@ type CardEntry struct {
 	SortOrder int
 }
 
-// SymptomTableRow ist eine Zeile innerhalb einer Symptom-Tabelle.
-// Die linke Spalte enthält das Medikament, die rechte Spalte Dosierung/Info.
 type SymptomTableRow struct {
 	ID             int64
 	SymptomTableID int64
-	Medication     string // linke Spalte
-	RightCol       string // rechte Spalte (Dosierung, Hinweise)
+	Medication     string
+	RightCol       string
 	SortOrder      int
 }
 
-// SymptomTable ist eine benannte Gruppe von Zeilen innerhalb eines Leitsymptoms.
 type SymptomTable struct {
 	ID        int64
 	SymptomID int64
-	Title     string // optionale Überschrift
+	Title     string
 	SortOrder int
 	Rows      []SymptomTableRow
 }
@@ -52,7 +49,7 @@ type Symptom struct {
 	Source      string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-	Tables      []SymptomTable // Tabellengruppen mit optionaler Überschrift
+	Tables      []SymptomTable
 	Medications []*Medication
 }
 

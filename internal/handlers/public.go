@@ -125,7 +125,7 @@ func (h *Handler) Imprint(w http.ResponseWriter, _ *http.Request) {
 func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 
-	// HTMX partial request → return only the results fragment
+	// HTMX partial request → return only the result fragment
 	isHtmx := r.Header.Get("HX-Request") == "true"
 
 	if q == "" {

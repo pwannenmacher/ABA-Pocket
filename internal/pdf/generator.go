@@ -35,9 +35,9 @@ type SymptomTableData struct {
 type CardData struct {
 	Title       string
 	Description string
-	CardType    string             // "symptom" | "medication"
-	Tables      []SymptomTableData // für Leitsymptome
-	Entries     []models.CardEntry // für Medikamente
+	CardType    string
+	Tables      []SymptomTableData
+	Entries     []models.CardEntry
 	Source      string
 	UpdatedAt   time.Time
 }

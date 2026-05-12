@@ -104,8 +104,7 @@ func (r *SymptomRepository) loadMedications(ctx context.Context, s *models.Sympt
 	}
 	var m models.Medication
 	_, err = pgx.ForEachRow(rows, []any{&m.ID, &m.Name, &m.Source, &m.UpdatedAt}, func() error {
-		med := m
-		s.Medications = append(s.Medications, &med)
+		s.Medications = append(s.Medications, new(m))
 		return nil
 	})
 	return err
