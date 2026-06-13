@@ -10,7 +10,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
-FROM dhi.io/alpine-base:3.23
+FROM dhi.io/alpine-base:3.24
 
 USER 0
 
