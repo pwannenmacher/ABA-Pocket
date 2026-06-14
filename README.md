@@ -16,7 +16,7 @@ Webanwendung zur Erfassung und Generierung druckbarer **Notfallmedizin-Taschenka
 - **Adminbereich**: CRUD für Karten, Drag & Drop-Sortierung von Tabellenzeilen
 - **Benutzerverwaltung**: Admins anlegen/löschen, Session-Cookies
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=bugs)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=coverage)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=bugs)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=coverage)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket)
 
 ## Tech-Stack
 
@@ -27,8 +27,6 @@ Webanwendung zur Erfassung und Generierung druckbarer **Notfallmedizin-Taschenka
 | PDF        | `go-pdf/fpdf` v0.9.0                      |
 | Frontend   | `html/template`, HTMX 1.9, Vanilla CSS/JS |
 | Deployment | Docker + Docker Compose                   |
-
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=coverage)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=pwannenmacher_ABA-Pocket&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=pwannenmacher_ABA-Pocket) 
 
 ## Schnellstart (Docker)
 
