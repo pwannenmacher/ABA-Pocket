@@ -16,13 +16,19 @@ import (
 
 const (
 	adminLoginErrorPath              = "/admin/login?error=1"
+	adminPath                        = "/admin"
+	adminSymptomsPath                = "/admin/symptoms"
+	adminMedicationsPath             = "/admin/medications"
+	adminUsersPath                   = "/admin/users"
 	logLoadMedicationsForSymptomForm = "load medications for symptom form: %v"
+	logLoadSymptomsForMedicationForm = "load symptoms for medication form: %v"
 	errMsgFehlerBeimSpeichern        = "Fehler beim Speichern"
+	errMsgFehlerBeimLoeschen         = "Fehler beim Löschen"
 )
 
 func (h *Handler) AdminLogin(w http.ResponseWriter, r *http.Request) {
 	if auth.UserFromContext(r.Context()) != nil {
-		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		http.Redirect(w, r, adminPath, http.StatusSeeOther)
 		return
 	}
 	t, err := h.getAdminTemplate("login")
@@ -79,7 +85,7 @@ func (h *Handler) AdminLoginPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	auth.SetSessionCookie(w, sessionID, !h.cfg.DevMode)
-	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+	http.Redirect(w, r, adminPath, http.StatusSeeOther)
 }
 
 func (h *Handler) AdminLogout(w http.ResponseWriter, r *http.Request) {
@@ -191,7 +197,7 @@ func (h *Handler) AdminCreateSymptom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.setFlash(w, fmt.Sprintf("Leitsymptom \"%s\" wurde erstellt.", s.Title))
-	http.Redirect(w, r, "/admin/symptoms", http.StatusSeeOther)
+	http.Redirect(w, r, adminSymptomsPath, http.StatusSeeOther)
 }
 
 func (h *Handler) AdminEditSymptom(w http.ResponseWriter, r *http.Request) {
@@ -257,7 +263,7 @@ func (h *Handler) AdminUpdateSymptom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.setFlash(w, fmt.Sprintf("Leitsymptom \"%s\" wurde gespeichert.", s.Title))
-	http.Redirect(w, r, "/admin/symptoms", http.StatusSeeOther)
+	http.Redirect(w, r, adminSymptomsPath, http.StatusSeeOther)
 }
 
 func (h *Handler) AdminDeleteSymptom(w http.ResponseWriter, r *http.Request) {
@@ -267,11 +273,11 @@ func (h *Handler) AdminDeleteSymptom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.repos.Symptoms.Delete(r.Context(), id); err != nil {
-		http.Error(w, "Fehler beim Löschen", http.StatusInternalServerError)
+		http.Error(w, errMsgFehlerBeimLoeschen, http.StatusInternalServerError)
 		return
 	}
 	h.setFlash(w, "Leitsymptom wurde gelöscht.")
-	http.Redirect(w, r, "/admin/symptoms", http.StatusSeeOther)
+	http.Redirect(w, r, adminSymptomsPath, http.StatusSeeOther)
 }
 
 func (h *Handler) AdminListMedications(w http.ResponseWriter, r *http.Request) {
@@ -291,7 +297,7 @@ func (h *Handler) AdminListMedications(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AdminNewMedication(w http.ResponseWriter, r *http.Request) {
 	symptoms, err := h.repos.Symptoms.List(r.Context())
 	if err != nil {
-		log.Printf("load symptoms for medication form: %v", err)
+		log.Printf(logLoadSymptomsForMedicationForm, err)
 	}
 	h.renderAdmin(w, r, http.StatusOK, "medication_form", PageData{
 		Title: "Neues Medikament",
@@ -320,7 +326,7 @@ func (h *Handler) AdminCreateMedication(w http.ResponseWriter, r *http.Request) 
 	if m.Name == "" {
 		symptoms, err := h.repos.Symptoms.List(r.Context())
 		if err != nil {
-			log.Printf("load symptoms for medication form: %v", err)
+			log.Printf(logLoadSymptomsForMedicationForm, err)
 		}
 		h.renderAdmin(w, r, http.StatusUnprocessableEntity, "medication_form", PageData{
 			Title: "Neues Medikament",
@@ -355,7 +361,7 @@ func (h *Handler) AdminCreateMedication(w http.ResponseWriter, r *http.Request) 
 	}
 
 	h.setFlash(w, fmt.Sprintf("Medikament \"%s\" wurde erstellt.", m.Name))
-	http.Redirect(w, r, "/admin/medications", http.StatusSeeOther)
+	http.Redirect(w, r, adminMedicationsPath, http.StatusSeeOther)
 }
 
 func (h *Handler) AdminEditMedication(w http.ResponseWriter, r *http.Request) {
@@ -373,7 +379,7 @@ func (h *Handler) AdminEditMedication(w http.ResponseWriter, r *http.Request) {
 
 	symptoms, err := h.repos.Symptoms.List(r.Context())
 	if err != nil {
-		log.Printf("load symptoms for medication form: %v", err)
+		log.Printf(logLoadSymptomsForMedicationForm, err)
 	}
 	linkedIDs, err := h.repos.Medications.GetLinkedSymptomIDs(r.Context(), id)
 	if err != nil {
@@ -429,7 +435,7 @@ func (h *Handler) AdminUpdateMedication(w http.ResponseWriter, r *http.Request) 
 	}
 
 	h.setFlash(w, fmt.Sprintf("Medikament \"%s\" wurde gespeichert.", m.Name))
-	http.Redirect(w, r, "/admin/medications", http.StatusSeeOther)
+	http.Redirect(w, r, adminMedicationsPath, http.StatusSeeOther)
 }
 
 func (h *Handler) AdminDeleteMedication(w http.ResponseWriter, r *http.Request) {
@@ -439,11 +445,11 @@ func (h *Handler) AdminDeleteMedication(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if err := h.repos.Medications.Delete(r.Context(), id); err != nil {
-		http.Error(w, "Fehler beim Löschen", http.StatusInternalServerError)
+		http.Error(w, errMsgFehlerBeimLoeschen, http.StatusInternalServerError)
 		return
 	}
 	h.setFlash(w, "Medikament wurde gelöscht.")
-	http.Redirect(w, r, "/admin/medications", http.StatusSeeOther)
+	http.Redirect(w, r, adminMedicationsPath, http.StatusSeeOther)
 }
 
 func (h *Handler) AdminListUsers(w http.ResponseWriter, r *http.Request) {
@@ -472,12 +478,12 @@ func (h *Handler) AdminCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if username == "" || password == "" {
 		h.setFlash(w, "Benutzername und Passwort sind erforderlich.")
-		http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
+		http.Redirect(w, r, adminUsersPath, http.StatusSeeOther)
 		return
 	}
 	if len(password) < 8 {
 		h.setFlash(w, "Das Passwort muss mindestens 8 Zeichen haben.")
-		http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
+		http.Redirect(w, r, adminUsersPath, http.StatusSeeOther)
 		return
 	}
 
@@ -490,12 +496,12 @@ func (h *Handler) AdminCreateUser(w http.ResponseWriter, r *http.Request) {
 	_, err = h.repos.Users.Create(r.Context(), username, email, string(hash))
 	if err != nil {
 		h.setFlash(w, "Fehler: Benutzername existiert möglicherweise bereits.")
-		http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
+		http.Redirect(w, r, adminUsersPath, http.StatusSeeOther)
 		return
 	}
 
 	h.setFlash(w, fmt.Sprintf("Benutzer \"%s\" wurde erstellt.", username))
-	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
+	http.Redirect(w, r, adminUsersPath, http.StatusSeeOther)
 }
 
 func (h *Handler) AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -509,16 +515,16 @@ func (h *Handler) AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
 	currentUser := auth.UserFromContext(r.Context())
 	if currentUser != nil && currentUser.ID == id {
 		h.setFlash(w, "Sie können Ihren eigenen Account nicht löschen.")
-		http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
+		http.Redirect(w, r, adminUsersPath, http.StatusSeeOther)
 		return
 	}
 
 	if err := h.repos.Users.Delete(r.Context(), id); err != nil {
-		http.Error(w, "Fehler beim Löschen", http.StatusInternalServerError)
+		http.Error(w, errMsgFehlerBeimLoeschen, http.StatusInternalServerError)
 		return
 	}
 	h.setFlash(w, "Benutzer wurde gelöscht.")
-	http.Redirect(w, r, "/admin/users", http.StatusSeeOther)
+	http.Redirect(w, r, adminUsersPath, http.StatusSeeOther)
 }
 
 // parseID parses the "id" URL parameter as int64.

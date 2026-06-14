@@ -10,6 +10,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const errMsgFehlerBeimLaden = "Fehler beim Laden"
+
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	err := h.repos.Pool.Ping(r.Context())
 	w.Header().Set("Content-Type", "application/json")
@@ -25,12 +27,12 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	symptoms, err := h.repos.Symptoms.List(r.Context())
 	if err != nil {
-		http.Error(w, "Fehler beim Laden", http.StatusInternalServerError)
+		http.Error(w, errMsgFehlerBeimLaden, http.StatusInternalServerError)
 		return
 	}
 	medications, err := h.repos.Medications.List(r.Context())
 	if err != nil {
-		http.Error(w, "Fehler beim Laden", http.StatusInternalServerError)
+		http.Error(w, errMsgFehlerBeimLaden, http.StatusInternalServerError)
 		return
 	}
 
@@ -46,7 +48,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ListSymptoms(w http.ResponseWriter, r *http.Request) {
 	symptoms, err := h.repos.Symptoms.List(r.Context())
 	if err != nil {
-		http.Error(w, "Fehler beim Laden", http.StatusInternalServerError)
+		http.Error(w, errMsgFehlerBeimLaden, http.StatusInternalServerError)
 		return
 	}
 	h.render(w, http.StatusOK, "symptoms", PageData{
@@ -77,7 +79,7 @@ func (h *Handler) GetSymptom(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ListMedications(w http.ResponseWriter, r *http.Request) {
 	medications, err := h.repos.Medications.List(r.Context())
 	if err != nil {
-		http.Error(w, "Fehler beim Laden", http.StatusInternalServerError)
+		http.Error(w, errMsgFehlerBeimLaden, http.StatusInternalServerError)
 		return
 	}
 	h.render(w, http.StatusOK, "medications", PageData{

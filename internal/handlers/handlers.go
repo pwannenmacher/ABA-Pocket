@@ -96,7 +96,7 @@ func (h *Handler) Router() http.Handler {
 	r.Get("/admin/login", h.AdminLogin)
 	r.Post("/admin/login", h.AdminLoginPost)
 
-	r.Route("/admin", func(r chi.Router) {
+	r.Route(adminPath, func(r chi.Router) {
 		r.Use(auth.Middleware(h.repos, !h.cfg.DevMode))
 		r.Use(h.csrfProtect)
 
@@ -203,7 +203,7 @@ func (h *Handler) setFlash(w http.ResponseWriter, msg string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "flash",
 		Value:    url.QueryEscape(msg),
-		Path:     "/admin",
+		Path:     adminPath,
 		MaxAge:   60,
 		HttpOnly: true,
 		Secure:   !h.cfg.DevMode,
@@ -219,7 +219,7 @@ func (h *Handler) getFlash(w http.ResponseWriter, r *http.Request) string {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "flash",
 		Value:    "",
-		Path:     "/admin",
+		Path:     adminPath,
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   !h.cfg.DevMode,
