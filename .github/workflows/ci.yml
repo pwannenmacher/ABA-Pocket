@@ -1,4 +1,4 @@
-name: Go CI/CD Pipeline
+name: CI
 
 on:
   push:
@@ -14,17 +14,18 @@ permissions:
 
 env:
   GO_VERSION: '1.26'
-  REGISTRY: docker.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+
   build-test-analyze:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # SonarCloud benötigt vollständige Historie
+
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
@@ -42,8 +43,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  docker-build-push:
-    needs: [ build-test-analyze ]
+  docker-build:
+    needs: build-test-analyze
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -55,21 +56,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Log in to DHI Registry
+      - name: Log in to dhi.io (Basisimages)
         uses: docker/login-action@v4
         with:
           registry: dhi.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build Docker image (kein Push)
         uses: docker/build-push-action@v7
         with:
           context: .
