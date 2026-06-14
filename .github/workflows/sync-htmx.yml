@@ -1,0 +1,42 @@
+name: Sync HTMX
+
+# Läuft automatisch, wenn Dependabot package-lock.json aktualisiert.
+# Kopiert die neue htmx.min.js in web/static/js/ und committet sie in den PR.
+on:
+  pull_request:
+    paths:
+      - 'package-lock.json'
+    branches:
+      - main
+
+jobs:
+  sync-htmx:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout PR-Branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync htmx.min.js
+        run: cp node_modules/htmx.org/dist/htmx.min.js web/static/js/htmx.min.js
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add web/static/js/htmx.min.js
+          git diff --staged --quiet || git commit -m "chore: sync htmx.min.js from npm"
+          git push
