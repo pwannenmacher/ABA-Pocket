@@ -36,3 +36,6 @@ postgres_data/
 
 # Go module cache (not needed in repo)
 vendor/
+
+# Node.js (nur für Asset-Verwaltung, nicht eingecheckt)
+node_modules/

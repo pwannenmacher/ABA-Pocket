@@ -1,4 +1,4 @@
-.PHONY: run build test docker-up docker-down migrate
+.PHONY: run build test docker-up docker-down migrate sync-assets
 
 run:
 	go run .
@@ -17,6 +17,9 @@ docker-down:
 
 migrate:
 	psql $(DATABASE_URL) -f migrations/001_initial.sql
+
+sync-assets:
+	npm ci && cp node_modules/htmx.org/dist/htmx.min.js web/static/js/htmx.min.js
 
 tidy:
 	go mod tidy
