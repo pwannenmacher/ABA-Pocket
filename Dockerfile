@@ -2,15 +2,25 @@ FROM --platform=$BUILDPLATFORM dhi.io/golang:1 AS builder
 
 WORKDIR /app
 
+# Abhängigkeiten zuerst cachen – selten geändert, daher frühzeitig kopieren
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
+# Nur die für den Build tatsächlich benötigten Dateien explizit kopieren.
+# COPY . . würde .github/, .idea/, PROMPT.md, Makefile usw. einschließen.
+COPY main.go ./
+COPY internal/ internal/
+COPY web/ web/
+COPY migrations/ migrations/
 
-# TARGETOS / TARGETARCH werden von Buildx automatisch gesetzt
+# ARG nach COPY: COPY-Layer bleibt plattformübergreifend gecacht;
+# nur der go-build-Step unterscheidet sich je Zielplattform.
+# TARGETOS / TARGETARCH werden von Buildx automatisch gesetzt.
 ARG TARGETOS TARGETARCH
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
-    go build -a -installsuffix cgo -o main .
+    go build -ldflags="-s -w" -o main .
+#   -s  Symbol-Tabelle entfernen   (kein reverse engineering interner Namen)
+#   -w  DWARF-Debuginfo entfernen  (kein Stack-Leak über Debug-Symbole)
 
 FROM dhi.io/alpine-base:3.24
 
@@ -18,11 +28,13 @@ USER 0
 
 WORKDIR /app
 
-COPY --from=builder /app/main /app/main
-COPY --from=builder /app/web /app/web
-COPY --from=builder /app/migrations /app/migrations
+# Benutzer anlegen, bevor Dateien kopiert werden
+RUN adduser -D -s /bin/sh appuser
 
-RUN adduser -D -s /bin/sh appuser && chown -R appuser:appuser /app
+# --chown setzt Eigentümer direkt beim Kopieren – kein separater chown-Layer nötig
+COPY --chown=appuser:appuser --from=builder /app/main      ./main
+COPY --chown=appuser:appuser --from=builder /app/web       ./web
+COPY --chown=appuser:appuser --from=builder /app/migrations ./migrations
 
 USER appuser
 
