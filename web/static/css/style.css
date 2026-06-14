@@ -892,6 +892,19 @@ tr.table-row.drag-over-bottom td { border-bottom: 2px solid var(--color-primary)
   .navbar { padding: 0 24px; }
 }
 
+/* ── Accessibility helpers ────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ── Print styles ─────────────────────────────────────────────── */
 @media print {
   .site-header, .site-footer, .card-actions, .related-section, .back-link-wrap { display: none; }
