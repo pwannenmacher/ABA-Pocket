@@ -1,5 +1,4 @@
-
-FROM dhi.io/golang:1 AS builder
+FROM --platform=$BUILDPLATFORM dhi.io/golang:1 AS builder
 
 WORKDIR /app
 
@@ -8,7 +7,10 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+# TARGETOS / TARGETARCH werden von Buildx automatisch gesetzt
+ARG TARGETOS TARGETARCH
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -a -installsuffix cgo -o main .
 
 FROM dhi.io/alpine-base:3.24
 
