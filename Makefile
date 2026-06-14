@@ -19,7 +19,7 @@ migrate:
 	psql $(DATABASE_URL) -f migrations/001_initial.sql
 
 sync-assets:
-	npm ci && cp node_modules/htmx.org/dist/htmx.min.js web/static/js/htmx.min.js
+	npm ci --ignore-scripts && cp node_modules/htmx.org/dist/htmx.min.js web/static/js/htmx.min.js
 
 tidy:
 	go mod tidy
