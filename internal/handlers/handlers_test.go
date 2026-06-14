@@ -120,3 +120,86 @@ func TestCSRFProtect_BlocksPostWithoutCookie(t *testing.T) {
 		t.Errorf("expected 403 without session cookie, got %d", w.Code)
 	}
 }
+
+func TestSetGetFlash_Roundtrip(t *testing.T) {
+	h := newTestHandler()
+
+	// Set the flash message
+	w := httptest.NewRecorder()
+	h.setFlash(w, "Gespeichert!")
+
+	// Extract the flash cookie from the response
+	var flashCookie *http.Cookie
+	for _, c := range w.Result().Cookies() {
+		if c.Name == "flash" {
+			flashCookie = c
+			break
+		}
+	}
+	if flashCookie == nil {
+		t.Fatal("flash cookie not set by setFlash")
+	}
+	if flashCookie.MaxAge != 60 {
+		t.Errorf("flash cookie MaxAge = %d, want 60", flashCookie.MaxAge)
+	}
+
+	// Read the flash message via getFlash
+	r := httptest.NewRequest(http.MethodGet, "/admin", nil)
+	r.AddCookie(flashCookie)
+	w2 := httptest.NewRecorder()
+
+	msg := h.getFlash(w2, r)
+	if msg != "Gespeichert!" {
+		t.Errorf("getFlash = %q, want %q", msg, "Gespeichert!")
+	}
+
+	// Cookie should be cleared (MaxAge=-1) after reading
+	cleared := false
+	for _, c := range w2.Result().Cookies() {
+		if c.Name == "flash" && c.MaxAge == -1 {
+			cleared = true
+			break
+		}
+	}
+	if !cleared {
+		t.Error("flash cookie should be cleared (MaxAge=-1) after reading")
+	}
+}
+
+func TestGetFlash_NoCookie(t *testing.T) {
+	h := newTestHandler()
+	r := httptest.NewRequest(http.MethodGet, "/admin", nil)
+	w := httptest.NewRecorder()
+
+	msg := h.getFlash(w, r)
+	if msg != "" {
+		t.Errorf("expected empty flash without cookie, got %q", msg)
+	}
+}
+
+func TestSetFlash_SpecialCharacters(t *testing.T) {
+	h := newTestHandler()
+
+	w := httptest.NewRecorder()
+	original := "Fehler: Ungültige Eingabe & <Sonderzeichen>!"
+	h.setFlash(w, original)
+
+	var flashCookie *http.Cookie
+	for _, c := range w.Result().Cookies() {
+		if c.Name == "flash" {
+			flashCookie = c
+			break
+		}
+	}
+	if flashCookie == nil {
+		t.Fatal("flash cookie not set")
+	}
+
+	// Reading back should restore original message
+	r := httptest.NewRequest(http.MethodGet, "/admin", nil)
+	r.AddCookie(flashCookie)
+	msg := h.getFlash(httptest.NewRecorder(), r)
+	if msg != original {
+		t.Errorf("flash roundtrip: got %q, want %q", msg, original)
+	}
+}
