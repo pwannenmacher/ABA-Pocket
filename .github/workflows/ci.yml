@@ -38,6 +38,7 @@ jobs:
         run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: SonarCloud Scan
+        if: github.actor != 'dependabot[bot]'
         uses: SonarSource/sonarqube-scan-action@v8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
