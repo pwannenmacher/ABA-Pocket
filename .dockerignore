@@ -30,7 +30,8 @@ output/
 test/
 
 # Docker-Dateien
-Dockerfile*
+Dockerfile-builder
+Dockerfile
 docker-compose*.yaml
 .dockerignore
 
