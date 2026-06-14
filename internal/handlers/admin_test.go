@@ -152,3 +152,26 @@ func TestParseMedicationIDsEmpty(t *testing.T) {
 		t.Errorf("expected 0 IDs, got %d", len(ids))
 	}
 }
+
+func TestParseSymptomIDs(t *testing.T) {
+	form := url.Values{
+		"symptom_ids[]": {"2", "7", "bad", "99"},
+	}
+	r := &http.Request{Form: form}
+
+	ids := parseSymptomIDs(r)
+	if len(ids) != 3 {
+		t.Fatalf("expected 3 valid IDs, got %d", len(ids))
+	}
+	if ids[0] != 2 || ids[1] != 7 || ids[2] != 99 {
+		t.Errorf("ids = %v", ids)
+	}
+}
+
+func TestParseSymptomIDsEmpty(t *testing.T) {
+	r := &http.Request{Form: url.Values{}}
+	ids := parseSymptomIDs(r)
+	if len(ids) != 0 {
+		t.Errorf("expected 0 IDs, got %d", len(ids))
+	}
+}
