@@ -17,7 +17,7 @@ COPY migrations/ migrations/
 # nur der go-build-Step unterscheidet sich je Zielplattform.
 # TARGETOS / TARGETARCH werden von Buildx automatisch gesetzt.
 ARG TARGETOS TARGETARCH
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+RUN CGO_ENABLED=0 GOOS="$TARGETOS" GOARCH="$TARGETARCH" \
     go build -ldflags="-s -w" -o main .
 #   -s  Symbol-Tabelle entfernen   (kein reverse engineering interner Namen)
 #   -w  DWARF-Debuginfo entfernen  (kein Stack-Leak über Debug-Symbole)
@@ -31,10 +31,11 @@ WORKDIR /app
 # Benutzer anlegen, bevor Dateien kopiert werden
 RUN adduser -D -s /bin/sh appuser
 
-# --chown setzt Eigentümer direkt beim Kopieren – kein separater chown-Layer nötig
-COPY --chown=appuser:appuser --from=builder /app/main      ./main
-COPY --chown=appuser:appuser --from=builder /app/web       ./web
-COPY --chown=appuser:appuser --from=builder /app/migrations ./migrations
+# --chown: Eigentümer direkt beim Kopieren setzen (kein separater chown-Layer)
+# --chmod=555: Nur Lesen + Ausführen erlaubt – appuser kann Dateien nicht modifizieren
+COPY --chown=appuser:appuser --chmod=555 --from=builder /app/main       ./main
+COPY --chown=appuser:appuser --chmod=555 --from=builder /app/web        ./web
+COPY --chown=appuser:appuser --chmod=555 --from=builder /app/migrations ./migrations
 
 USER appuser
 
