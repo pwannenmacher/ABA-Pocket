@@ -18,6 +18,12 @@
   {{if $m.Entries}}
   <div class="card-table-wrapper">
     <table class="card-table">
+      <thead class="sr-only">
+        <tr>
+          <th scope="col">Eigenschaft</th>
+          <th scope="col">Wert</th>
+        </tr>
+      </thead>
       <tbody>
         {{range $m.Entries}}
         <tr>
