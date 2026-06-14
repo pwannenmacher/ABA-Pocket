@@ -1,4 +1,37 @@
-# Build-Artefakte
+# Versionsverwaltung
+.git/
+.gitignore
+
+# Secrets / Konfiguration (nie in den Build-Context!)
+.env
+.env.*
+
+# CI/CD & Repository-Metadaten
+.github/
+sonar-project.properties
+
+# IDE-Dateien (enthalten ggf. Datenbankverbindungsstrings)
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Dokumentation & Projektdateien
+*.md
+LICENSE
+Makefile
+img.png
+*.png
+*.jpg
+
+# Docker-Dateien selbst
+Dockerfile
+docker-compose*.yml
+docker-compose*.yaml
+.dockerignore
+
+# Build-Artefakte & Binaries
 *.exe
 *.exe~
 *.dll
@@ -6,49 +39,29 @@
 *.dylib
 *.test
 *.out
+main
 
-# Entwicklungsverzeichnisse
-.git
-.gitignore
-README.md
-.env
-.env.*
-
-# IDE-Dateien
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Log-Dateien
-*.log
-
-# Test-Verzeichnisse
+# Test- & Entwicklungsverzeichnisse
+test/
+test-scripts/
 input/
 output/
-test/
-
-# Docker-Dateien
-Dockerfile
-docker-compose*.yaml
-.dockerignore
+demo/
+tmp/
+dist/
+build/
+coverage/
+bin/
+node_modules/
+docker-examples/
 
 # OS-spezifische Dateien
 .DS_Store
 Thumbs.db
 
+# Log-Dateien
+*.log
+
 # Backup-Dateien
 *.bak
 *.backup
-
-# Sonstige
-demo/
-test-scripts/
-tmp/
-dist/
-build/
-node_modules/
-coverage/
-bin/
-docker-examples
