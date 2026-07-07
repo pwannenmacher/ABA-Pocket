@@ -3,7 +3,7 @@ module aba-pocket
 go 1.26.0
 
 require (
-	github.com/go-chi/chi/v5 v5.3.0
+	github.com/go-chi/chi/v5 v5.3.1
 	github.com/go-pdf/fpdf v0.9.0
 	github.com/gomarkdown/markdown v0.0.0-20260417124207-7d523f7318df
 	github.com/jackc/pgx/v5 v5.10.0
