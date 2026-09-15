@@ -22,7 +22,7 @@ Webanwendung zur Erfassung und Generierung druckbarer **Notfallmedizin-Taschenka
 
 | Schicht    | Technologie                               |
 |------------|-------------------------------------------|
-| Backend    | Go 1.26, `chi` Router                     |
+| Backend    | Go 1.27, `chi` Router                     |
 | Datenbank  | PostgreSQL 18, `pgx/v5`                   |
 | PDF        | `go-pdf/fpdf` v0.9.0                      |
 | Frontend   | `html/template`, HTMX 1.9, Vanilla CSS/JS |
@@ -51,7 +51,7 @@ Benutzer in der Datenbank existieren.
 
 ## Lokale Entwicklung
 
-**Voraussetzungen**: Go 1.26+, PostgreSQL 18
+**Voraussetzungen**: Go 1.27+, PostgreSQL 18
 
 ```bash
 # PostgreSQL starten (nur DB)
