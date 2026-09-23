@@ -2,6 +2,6 @@
   "name": "aba-pocket-assets",
   "private": true,
   "dependencies": {
-    "htmx.org": "2.0.10"
+    "htmx.org": "4.0.0"
   }
 }
