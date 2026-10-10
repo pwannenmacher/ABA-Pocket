@@ -186,30 +186,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isHtmx {
-		// Navbar-Dropdown vs. Suchseiten-Ergebnisse unterscheiden
-		if hxTargetID(r) == "search-results-dropdown" {
-			t, err := h.loadTemplate("search_results_dropdown", []string{
-				filepath.Join("web", "templates", "search_results.html"),
-			})
-			if err != nil {
-				log.Printf("search_results dropdown template load error: %v", err)
-				writeSearchError(w, "dropdown-empty")
-				return
-			}
-			if err := t.ExecuteTemplate(w, "search_results", data); err != nil {
-				log.Printf("search_results dropdown template error: %v", err)
-			}
-			return
-		}
-		t, err := h.getTemplate("search")
-		if err != nil {
-			log.Printf("search template load error: %v", err)
-			writeSearchError(w, "empty-state")
-			return
-		}
-		if err := t.ExecuteTemplate(w, "search_results", data); err != nil {
-			log.Printf("search_results template error: %v", err)
-		}
+		h.renderSearchFragment(w, r, data)
 		return
 	}
 
@@ -217,4 +194,32 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 		Title: "Suche: " + q,
 		Data:  data,
 	})
+}
+
+// renderSearchFragment rendert das HTMX-Teilergebnis der Suche:
+// Navbar-Dropdown oder Ergebnisliste der Suchseite, abhängig vom HX-Target.
+func (h *Handler) renderSearchFragment(w http.ResponseWriter, r *http.Request, data map[string]any) {
+	if hxTargetID(r) == "search-results-dropdown" {
+		t, err := h.loadTemplate("search_results_dropdown", []string{
+			filepath.Join("web", "templates", "search_results.html"),
+		})
+		if err != nil {
+			log.Printf("search_results dropdown template load error: %v", err)
+			writeSearchError(w, "dropdown-empty")
+			return
+		}
+		if err := t.ExecuteTemplate(w, "search_results", data); err != nil {
+			log.Printf("search_results dropdown template error: %v", err)
+		}
+		return
+	}
+	t, err := h.getTemplate("search")
+	if err != nil {
+		log.Printf("search template load error: %v", err)
+		writeSearchError(w, "empty-state")
+		return
+	}
+	if err := t.ExecuteTemplate(w, "search_results", data); err != nil {
+		log.Printf("search_results template error: %v", err)
+	}
 }
