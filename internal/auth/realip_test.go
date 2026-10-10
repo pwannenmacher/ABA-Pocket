@@ -96,3 +96,35 @@ func TestRealIPMiddleware_MultipleForwardedFor(t *testing.T) {
 		t.Errorf("expected leftmost IP 203.0.113.50, got %s", got)
 	}
 }
+
+func TestRealIPMiddleware_IPv6AndInvalidProxy(t *testing.T) {
+	// "::1" wird zu ::1/128, ungültige Einträge werden ignoriert.
+	mw := RealIPMiddleware([]string{"::1", "not-an-ip"})
+	var got string
+	handler := mw(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.RemoteAddr
+	}))
+	r := httptest.NewRequest("GET", "/", nil)
+	r.RemoteAddr = "[::1]:4711"
+	r.Header.Set("X-Forwarded-For", "2001:db8::1")
+	handler.ServeHTTP(httptest.NewRecorder(), r)
+	if got != "2001:db8::1" {
+		t.Errorf("expected 2001:db8::1, got %s", got)
+	}
+}
+
+func TestRealIPMiddleware_TrustedWithoutHeaders(t *testing.T) {
+	// Vertrauenswürdiger Proxy ohne Forwarding-Header → RemoteAddr bleibt.
+	// RemoteAddr ohne Port wird direkt als IP geparst.
+	mw := RealIPMiddleware([]string{"10.0.0.1"})
+	var got string
+	handler := mw(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.RemoteAddr
+	}))
+	r := httptest.NewRequest("GET", "/", nil)
+	r.RemoteAddr = "10.0.0.1"
+	handler.ServeHTTP(httptest.NewRecorder(), r)
+	if got != "10.0.0.1" {
+		t.Errorf("expected unchanged 10.0.0.1, got %s", got)
+	}
+}
