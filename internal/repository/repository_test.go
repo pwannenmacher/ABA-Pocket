@@ -605,3 +605,39 @@ func TestSortOrderPreserved(t *testing.T) {
 		}
 	}
 }
+
+func TestMedicationRepository_SetSymptoms(t *testing.T) {
+	cleanDB(t)
+	ctx := context.Background()
+	symRepo := NewSymptomRepository(testPool)
+	medRepo := NewMedicationRepository(testPool)
+
+	medID, _ := medRepo.Create(ctx, &models.Medication{Name: "Adrenalin"})
+	sym1, _ := symRepo.Create(ctx, &models.Symptom{Title: "Anaphylaxie"})
+	sym2, _ := symRepo.Create(ctx, &models.Symptom{Title: "Reanimation"})
+
+	if err := medRepo.SetSymptoms(ctx, medID, []int64{sym1, sym2, sym1}); err != nil {
+		t.Fatalf("SetSymptoms: %v", err)
+	}
+	ids, err := medRepo.GetLinkedSymptomIDs(ctx, medID)
+	if err != nil {
+		t.Fatalf("GetLinkedSymptomIDs: %v", err)
+	}
+	if len(ids) != 2 || !ids[sym1] || !ids[sym2] {
+		t.Errorf("linked IDs = %v, want {%d, %d}", ids, sym1, sym2)
+	}
+
+	// Ersetzen statt Anhängen
+	if err := medRepo.SetSymptoms(ctx, medID, []int64{sym2}); err != nil {
+		t.Fatalf("SetSymptoms replace: %v", err)
+	}
+	ids, _ = medRepo.GetLinkedSymptomIDs(ctx, medID)
+	if len(ids) != 1 || !ids[sym2] {
+		t.Errorf("after replace linked IDs = %v, want {%d}", ids, sym2)
+	}
+
+	// Ungültige Symptom-ID verletzt den Foreign Key
+	if err := medRepo.SetSymptoms(ctx, medID, []int64{999999}); err == nil {
+		t.Error("expected FK error for unknown symptom ID")
+	}
+}
