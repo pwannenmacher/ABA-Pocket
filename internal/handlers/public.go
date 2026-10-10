@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -124,6 +126,19 @@ func (h *Handler) Imprint(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
+// hxTargetID liefert die Element-ID aus dem HX-Target-Header.
+// htmx 4 sendet "tag#id" (z. B. "div#search-results-dropdown"), htmx 2 nur "id".
+func hxTargetID(r *http.Request) string {
+	t := r.Header.Get("HX-Target")
+	if i := strings.LastIndexByte(t, '#'); i >= 0 {
+		t = t[i+1:]
+	}
+	if id, err := url.PathUnescape(t); err == nil {
+		return id
+	}
+	return t
+}
+
 func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 
@@ -162,8 +177,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 
 	if isHtmx {
 		// Navbar-Dropdown vs. Suchseiten-Ergebnisse unterscheiden
-		target := r.Header.Get("HX-Target")
-		if target == "search-results-dropdown" {
+		if hxTargetID(r) == "search-results-dropdown" {
 			t, err := h.loadTemplate("search_results_dropdown", []string{
 				filepath.Join("web", "templates", "search_results.html"),
 			})

@@ -203,3 +203,20 @@ func TestSetFlash_SpecialCharacters(t *testing.T) {
 		t.Errorf("flash roundtrip: got %q, want %q", msg, original)
 	}
 }
+
+func TestHxTargetID(t *testing.T) {
+	cases := map[string]string{
+		"div#search-results-dropdown": "search-results-dropdown", // htmx 4
+		"search-results-dropdown":     "search-results-dropdown", // htmx 2
+		"div#a%20b":                   "a b",
+		"div":                         "div",
+		"":                            "",
+	}
+	for header, want := range cases {
+		r := httptest.NewRequest(http.MethodGet, "/search", nil)
+		r.Header.Set("HX-Target", header)
+		if got := hxTargetID(r); got != want {
+			t.Errorf("hxTargetID(%q) = %q, want %q", header, got, want)
+		}
+	}
+}

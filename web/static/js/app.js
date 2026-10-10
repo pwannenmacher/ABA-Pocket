@@ -1,8 +1,9 @@
-document.addEventListener('htmx:configRequest', function(evt) {
-  if (['post','put','delete','patch'].includes(evt.detail.verb)) {
+document.addEventListener('htmx:config:request', function(evt) {
+  const req = evt.detail.ctx.request;
+  if (['POST','PUT','DELETE','PATCH'].includes(req.method.toUpperCase())) {
     const meta = document.querySelector('meta[name="csrf-token"]');
-    if (meta) {
-      evt.detail.parameters['csrf_token'] = meta.content;
+    if (meta && req.body) {
+      req.body.set('csrf_token', meta.content);
     }
   }
 });
