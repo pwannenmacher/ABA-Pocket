@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -139,6 +140,15 @@ func hxTargetID(r *http.Request) string {
 	return t
 }
 
+// writeSearchError schreibt ein HTML-Fragment für fehlgeschlagene HTMX-Suchen.
+// htmx 4 swappt auch 5xx-Antworten in das Ziel – statt Plaintext soll dort
+// eine gestylte Meldung erscheinen.
+func writeSearchError(w http.ResponseWriter, class string) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusInternalServerError)
+	fmt.Fprintf(w, `<p class="%s">Suche fehlgeschlagen. Bitte erneut versuchen.</p>`, class)
+}
+
 func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 
@@ -182,7 +192,8 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 				filepath.Join("web", "templates", "search_results.html"),
 			})
 			if err != nil {
-				http.Error(w, "Fehler", http.StatusInternalServerError)
+				log.Printf("search_results dropdown template load error: %v", err)
+				writeSearchError(w, "dropdown-empty")
 				return
 			}
 			if err := t.ExecuteTemplate(w, "search_results", data); err != nil {
@@ -192,7 +203,8 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 		}
 		t, err := h.getTemplate("search")
 		if err != nil {
-			http.Error(w, "Fehler", http.StatusInternalServerError)
+			log.Printf("search template load error: %v", err)
+			writeSearchError(w, "empty-state")
 			return
 		}
 		if err := t.ExecuteTemplate(w, "search_results", data); err != nil {
