@@ -209,6 +209,7 @@ func TestHxTargetID(t *testing.T) {
 		"div#search-results-dropdown": "search-results-dropdown", // htmx 4
 		"search-results-dropdown":     "search-results-dropdown", // htmx 2
 		"div#a%20b":                   "a b",
+		"div#bad%zz":                  "bad%zz", // ungültiges Escaping → roh
 		"div":                         "div",
 		"":                            "",
 	}
