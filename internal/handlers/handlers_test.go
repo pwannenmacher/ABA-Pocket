@@ -220,3 +220,18 @@ func TestHxTargetID(t *testing.T) {
 		}
 	}
 }
+
+func TestWriteSearchError(t *testing.T) {
+	w := httptest.NewRecorder()
+	writeSearchError(w, "dropdown-empty")
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("status = %d, want 500", w.Code)
+	}
+	if ct := w.Header().Get("Content-Type"); !strings.HasPrefix(ct, "text/html") {
+		t.Errorf("Content-Type = %q, want text/html", ct)
+	}
+	if body := w.Body.String(); !strings.Contains(body, `class="dropdown-empty"`) {
+		t.Errorf("body = %q, want dropdown-empty fragment", body)
+	}
+}
